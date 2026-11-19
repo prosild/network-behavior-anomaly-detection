@@ -17,7 +17,7 @@
 
 | 문서 | 내용 |
 | --- | --- |
-| [data-usage-terms.md](data-usage-terms.md) | CIC-IDS2017 이용·재배포 조건 |
+| [data-usage-terms.md](data-usage-terms.md) | CIC-IDS2017·개선 라벨·MITRE ATT&CK 이용 조건과 인용 |
 | [observation-meaning.md](observation-meaning.md) | 공격 후보 하나와 정상 비교 하나를 Zeek 관측으로 읽는 법 |
 | [eda-design-evidence.md](eda-design-evidence.md) | EDA 결과와 설계 근거(그림 [figures/eda/](figures/eda/)) |
 | [feature-dictionary-v1.md](feature-dictionary-v1.md), [feature-dictionary-v2.md](feature-dictionary-v2.md) | 특징 사전(v1 conn 18개, v2는 프로토콜 로그 24개를 더한 42개) |

@@ -56,7 +56,7 @@ flowchart LR
 - **월요일(정상)만으로 학습한다.**
   - 앞 80%는 학습, 뒤 20%는 임계값용 보류 구간이다. 임계값은 보류 구간 점수의 95번째 백분위수다.
   - 화~금은 평가에만 쓴다.
-- **정답**: CIC는 공식 공격 일정 → Zeek 연결 관측 → 개선 라벨([재검토 연구](https://intrusion-detection.distrinet-research.be/WTMC2021/extended_doc.html)의 CICIDS2017_improved) 대조로 만든 확정 에피소드 16건([정답 v1](docs/ground-truth-v1.md)). 여기에 합성 APT 패턴 주입 20건(beacon, 느린 유출, DNS 터널, 측면 이동, 느린 정찰, [DD-008](docs/design-decisions/DD-008-synthetic-apt-injection.md))을 더했다.
+- **정답**: CIC는 공식 공격 일정 → Zeek 연결 관측 → 개선 라벨(재검토 연구의 [CICIDS2017_improved](https://intrusion-detection.distrinet-research.be/CNS2022/index.html), 아래 [출처](#출처)) 대조로 만든 확정 에피소드 16건([정답 v1](docs/ground-truth-v1.md)). 여기에 합성 APT 패턴 주입 20건(beacon, 느린 유출, DNS 터널, 측면 이동, 느린 정찰, [DD-008](docs/design-decisions/DD-008-synthetic-apt-injection.md))을 더했다.
 - **채점 단위**: 내부 자산 × 역할(보내는 쪽·받는 쪽) × 5분 창이다. 이어진 이상 창을 사건으로 묶고, 하루 조사 큐의 상위 N건(Recall@N)으로 평가한다.
 - 데이터의 함정을 먼저 확인하고 설계에 반영했다([EDA 근거](docs/eda-design-evidence.md)).
   - 공격 대부분이 방화벽 NAT 주소(172.16.0.1)에서 온다.
@@ -195,7 +195,7 @@ docker compose -f deploy/compose.yaml --env-file deploy/.env up -d && python scr
 
 - 배포 VM과 Kali 실습망을 만드는 법은 [docs/vm-deployment.md](docs/vm-deployment.md)에 처음부터 따라 하는 순서로 있다.
 - 자동 파이프라인을 켜는 법과 동작 원리는 [docs/live-pipeline.md](docs/live-pipeline.md)에 있다.
-- 원본 데이터(CIC-IDS-2017, 약 51GB)와 생성물(`outputs/`)은 저장소에 없다. 이용 조건은 [docs/data-usage-terms.md](docs/data-usage-terms.md)에 있다.
+- 원본 데이터(CIC-IDS-2017, 약 51GB)와 생성물(`outputs/`)은 저장소에 없다. 인용할 논문은 아래 [출처](#출처), 이용 조건은 [docs/data-usage-terms.md](docs/data-usage-terms.md)에 있다.
 
 ## 저장소 구조
 
@@ -226,3 +226,12 @@ docker compose -f deploy/compose.yaml --env-file deploy/.env up -d && python scr
 - [docs/stage-0-progress.md](docs/stage-0-progress.md) ~ [docs/stage-7-progress.md](docs/stage-7-progress.md): 단계별로 한 일, 실행 결과, 발견한 문제.
 - [docs/design-discussion-log.md](docs/design-discussion-log.md): 설계 질문과 판단 근거.
 - [docs/data-contract-v2.md](docs/data-contract-v2.md): Java 대시보드([zeek_ad_dashboard](https://github.com/prosild/zeek_ad_dashboard))와의 데이터 계약(뷰·DB 함수).
+
+## 출처
+
+- **CIC-IDS-2017** (Canadian Institute for Cybersecurity, University of New Brunswick): https://www.unb.ca/cic/datasets/ids-2017.html
+  - I. Sharafaldin, A. H. Lashkari, A. A. Ghorbani, "Toward Generating a New Intrusion Detection Dataset and Intrusion Traffic Characterization," 4th International Conference on Information Systems Security and Privacy (ICISSP), 2018.
+- **개선 라벨 CICIDS2017_improved**: https://intrusion-detection.distrinet-research.be/CNS2022/index.html
+  - G. Engelen, V. Rimmer, W. Joosen, "Troubleshooting an Intrusion Detection Dataset: the CICIDS2017 Case Study," 2021 IEEE Security and Privacy Workshops (SPW, WTMC 2021), pp. 7–12.
+  - L. Liu, G. Engelen, T. Lynar, D. Essam, W. Joosen, "Error Prevalence in NIDS datasets: A Case Study on CIC-IDS-2017 and CSE-CIC-IDS-2018," 2022 IEEE Conference on Communications and Network Security (CNS), pp. 254–262.
+- **MITRE ATT&CK®** (Enterprise 20.1): RAG 검색 문서로 쓴다. 원문과 검색 문서는 저장소에 넣지 않았다(검색 문서는 [scripts/build_attack_corpus.py](scripts/build_attack_corpus.py)로 만든다). 이용 조건: https://attack.mitre.org/resources/legal-and-branding/terms-of-use/
