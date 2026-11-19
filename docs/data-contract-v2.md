@@ -1,0 +1,223 @@
+# 데이터 계약 v2: 단계 5b 결과(보고서·전송 판단·Slack·사건 상태)
+
+- 작성일: 2026-11-17. [데이터 계약 v1](data-contract-v1.md)에 뷰를 **추가만** 했다. v1 뷰의 열과 뜻은 바뀌지 않는다.
+- 정의: [008_incident_status.sql](../db/migrations/008_incident_status.sql)(상태 뷰·상태 변경 함수), [010_dashboard_v2.sql](../db/migrations/010_dashboard_v2.sql)(보고서·판단·Slack 뷰), [011_report_facts.sql](../db/migrations/011_report_facts.sql)(사실 목록·가명표 열), [012_incident_identity.sql](../db/migrations/012_incident_identity.sql)(v2.1: 사건 ID 기준 상태, 최신 큐 뷰)
+- 관련 결정: [DD-001](design-decisions/DD-001-slack-delivery-jev-gate.md)(전송 판단 A단계), [DD-010](design-decisions/DD-010-ecs-enrichment-incident-lifecycle.md)(사건 상태), [DD-011](design-decisions/DD-011-gemini-decision-model.md)(판단 모델), [DD-014](design-decisions/DD-014-no-human-labels.md)
+- 접속과 이름 규칙은 v1과 같다. 읽기는 `dashboard_ro`, 상태 변경은 `dashboard_rw`(아래 "쓰기")다.
+
+## 한 사건에 붙는 것
+
+```
+incident_queue (v1) ── 사건 하나 = (job_id, incident_id)
+ ├ incident_reports     보고서 1개(LLM 또는 템플릿)
+ ├ send_decisions       전송 판단 1개(세 의견)
+ ├ slack_deliveries     Slack 기록 0~3개(사건 알림, 상태 후속 알림)
+ ├ incident_status      상태 1개(행이 없으면 open)
+ ├ incident_status_history  상태 변경 이력 0개 이상
+ └ analyst_review_queue 분석가 검토 요청 0~1개
+```
+
+- 보고서·판단·Slack 기록은 **전송 판단 대상 사건에만** 있다. 지금은 캡처마다 큐 상위 일부(평가 세트 60건)다. 나머지 사건은 v1 뷰만 있다. 화면에서는 "보고서 없음"으로 보여 준다.
+- 모든 뷰는 `(job_id, incident_id)`로 조인한다. `incident_id`에는 자산 IP가 들어 있다(v1과 같다).
+
+## 뷰
+
+### `dashboard.incident_reports`: 사건 보고서
+
+| 열 | 타입 | 뜻 |
+| --- | --- | --- |
+| `job_id`, `incident_id` | | 사건 키 |
+| `zeekad_report_kind` | text | `llm`(LLM 보고서가 검증 통과) 또는 `template`(검증 실패·호출 실패로 규칙 템플릿으로 바꿈) |
+| `zeekad_report_version` | text | `llm-report.v1` 또는 `template.v1` |
+| `zeekad_input_version` | text | LLM 입력 형식, 예: `llm-input.v2` |
+| `zeekad_report` | jsonb | 화면에 보일 보고서 본문(아래 구조) |
+| `zeekad_verification_passed` | boolean | LLM 보고서 검증 결과. `false`면 kind가 `template`이다 |
+| `zeekad_verification_reason` | text | 실패 이유: `verification`(숫자·가명·ATT&CK ID가 사실과 안 맞음), `call`(호출 실패) 등. 통과면 null |
+| `zeekad_verification_problems` | jsonb | 걸린 항목 목록, 예: `[{"kind": "number_not_in_facts", "value": "2", "where": "possible_explanations[2]"}]` |
+| `llm_model_requested`, `llm_model_version` | text | 요청한 모델과 실제 응답한 모델 버전(다를 수 있다. 예: 요청 `gemini-3.7-flash`, 응답 `gemini-3.8-flash`) |
+| `llm_seconds` | double | LLM 호출 시간(초) |
+| `llm_input_tokens`, `llm_output_tokens`, `llm_thinking_tokens` | integer | 토큰 수. 호출 실패면 null |
+| `llm_error` | text | 호출 오류 종류. 없으면 null |
+| `zeekad_attack_candidates` | jsonb | 검색으로 찾은 ATT&CK 후보 `[{attack_id, name, tactics}]`. **가설이다.** 보고서의 `attack_ids`는 이 안에서만 나온다 |
+| `zeekad_source_run` | text | 만든 실행(재현용). 예: `20261117T020850Z-eval`, `agent-graph.v1` |
+| `created_at` | timestamptz | 만든 시각 |
+| `zeekad_facts` | jsonb | 보고서를 쓸 때 LLM에 보낸 사실 목록 `[{id, name, value}]`. 가명·상대 초로 되어 있고 실제 IP는 없다 |
+| `zeekad_pseudonyms` | jsonb | 가명표 `{"H": "192.168.10.50", "I1": "...", "X1": "..."}`. **실제 IP다.** DB에만 있고 LLM에는 보내지 않았다 |
+
+`zeekad_report` 구조:
+
+| 키 | LLM | 템플릿 | 뜻 |
+| --- | --- | --- | --- |
+| `observation_summary` | O | O | 한두 문장 요약 |
+| `claims` | O | O | `[{claim, fact_ids}]`. 관측 사실 문장과 근거 사실 번호 |
+| `possible_explanations` | O | O(빈 배열) | `[{explanation, fact_ids, attack_ids}]`. 가능한 해석(가설) |
+| `send_recommendation` | O | **없음** | `{choice, reason, fact_ids}`. LLM의 전송 의견. 실제 전송 여부가 아니다 |
+| `limitations`, `follow_up` | O | O | 한계, 추가로 확인할 것(문장 배열) |
+| `report_version` | O | O | 위 열과 같다 |
+
+- **글 속 `H`, `I1`, `X1`은 가명이다.** `H`는 사건 자산(`host_ip`), `I*`는 내부 상대, `X*`는 외부 상대다. LLM에 실제 IP를 보내지 않으려고 쓴다. 실제 주소는 근거 API의 `peers.top`·`representative_connections`에서 본다.
+- `F01` 같은 사실 번호는 `zeekad_facts`의 `id`다. 화면에서는 주장 옆에 근거 사실(이름·값)을 펼쳐 보여 줄 수 있다.
+- 가명을 실제 주소로 바꿔 보여 줄 때는 `zeekad_pseudonyms`를 쓴다. 예: 주장 "외부 피어 X1과의 연결이 150941건"(F34) → F34 = `top_peer_1 {"peer": "X1", "connections": 150941}`, X1 = `172.16.0.1`.
+- `H`, `I*`, `X*`는 글자 경계로 찾는다(`HTTP`의 H는 가명이 아니다). 번호 매기는 순서는 상위 상대 → 대표 연결이다.
+- 보고서 글은 LLM이 쓴 문장이다. HTML로 해석하지 말고 글자 그대로 보여 준다(이스케이프).
+
+### `dashboard.send_decisions`: 전송 판단(세 의견)
+
+| 열 | 타입 | 뜻 |
+| --- | --- | --- |
+| `job_id`, `incident_id` | | 사건 키 |
+| `zeekad_would_send` | boolean | **실제로 Slack에 보내는지.** A단계라 정책 규칙이 정한다 |
+| `zeekad_decided_by` | text | 누가 정했나. 지금은 항상 `policy` |
+| `policy_id`, `policy_choice` | text | 정책 규칙 버전(`policy.v1`)과 결정(`send`·`hold`) |
+| `policy_mandatory` | boolean | 필수 전송 조건(큐 5위 이내 또는 2개 이상 모델이 꼽음)에 걸렸나 |
+| `policy_reasons` | jsonb | 걸린 조건 문장 배열, 예: `["queue_rank 3 <= 5", "flagging_models 3 >= 2"]` |
+| `llm_choice` | text | LLM 보고서의 의견(`send`·`hold`·`analyst_review`·`need_more_evidence`). 템플릿이면 null |
+| `decision_model` | text | 판단 모델 이름(`gemini-decision-1`) |
+| `decision_model_choice` | text | 판단 모델 의견. 호출 실패면 null |
+| `decision_model_confidence` | double | 고른 선택지의 확률. **정확도가 아니다**(모델이 얼마나 한쪽으로 기울었는지) |
+| `decision_model_probabilities` | jsonb | 선택지별 확률, 예: `{"send": 0.69, "hold": 0.07, ...}` |
+| `decision_model_error` | text | 호출 오류 종류 |
+| `zeekad_source_run`, `created_at` | | 실행, 시각 |
+
+화면 권장: `zeekad_would_send`를 크게, 세 의견은 작게 나란히 둔다. 의견이 갈리면(예: 정책 send, 판단 모델 hold) 표시한다.
+
+### `dashboard.slack_deliveries`: Slack 전송 기록
+
+| 열 | 타입 | 뜻 |
+| --- | --- | --- |
+| `job_id`, `incident_id` | | 사건 키 |
+| `zeekad_message_kind` | text | `incident`(사건 알림) 또는 `status`(상태가 바뀌었다는 후속 알림) |
+| `zeekad_message_version` | text | 사건 알림이면 보고서 버전, 상태 알림이면 `status:investigating`·`status:closed` |
+| `zeekad_delivery_mode` | text | `dry_run`(보내지 않고 기록만) 또는 `live` |
+| `zeekad_delivery_status` | text | `recorded`(dry_run 기록), `delivered`, `failed` |
+| `slack_payload` | jsonb | Slack Block Kit 본문 `{channel, text, blocks}`. 사건 자산의 실제 IP가 들어 있다 |
+| `slack_ts`, `delivered_at`, `error` | | 실제 전송 때만 채워진다 |
+| `created_at` | timestamptz | 기록 시각 |
+| `zeekad_thread_parent` | text | 같은 자산 알림 묶음(DD-010 결정 5)의 머리 사건 `incident_id`. 이 알림은 그 사건 알림의 Slack 스레드 답글이다. 머리 알림 자신이면 null(머리 사건의 뒤 알림은 자기 자신). 2026-11-19 추가(migration 016) |
+| `zeekad_reply_broadcast` | boolean | 답글을 채널에도 띄웠는가(30분 재알림). 2026-11-19 추가 |
+
+지금은 Slack 토큰이 없어 모두 `dry_run`·`recorded`다. 2026-11-19부터 에이전트 알림은 같은 자산·역할의 미해결 알림 묶음(관측 시각 60분 안)이 있으면 스레드 답글로 기록된다. 화면에서 Slack처럼 묶어 보여 주려면 `zeekad_thread_parent`로 묶는다.
+
+### `dashboard.slack_summaries`: Slack 일일 요약
+
+`job_id`, `capture_id`, `zeekad_message_version`(`daily-summary.v1`), `zeekad_delivery_mode`, `zeekad_delivery_status`, `slack_payload`, `slack_ts`, `delivered_at`, `created_at`. 채점 작업(캡처 하루)마다 하나다. 보내지 않은 사건 수와 ID도 들어 있다(DD-001).
+
+### `dashboard.incident_status`: 사건 상태
+
+| 열 | 타입 | 뜻 |
+| --- | --- | --- |
+| `job_id`, `incident_id` | | 사건 키. 완료된 작업의 **모든** 사건이 나온다. 상태는 `incident_id`에 붙어 있어 같은 사건이면 작업이 달라도 같다(v2.1) |
+| `zeekad_status` | text | `open`(열림), `investigating`(확인 중), `closed`(종료) |
+| `zeekad_resolution` | text | 종료 결론: `true_positive`(실제 공격), `false_positive`(오탐), `benign`(이상하지만 정상 업무). 종료가 아니면 null |
+| `updated_at`, `updated_by` | | 마지막 변경. 한 번도 안 바뀐 사건은 null |
+
+### `dashboard.incident_status_history`: 상태 변경 이력
+
+`job_id`, `incident_id`, `from_status`, `to_status`, `zeekad_resolution`, `actor`(누가), `reason`(왜), `changed_at`. 추가만 되는 기록이다. 고치거나 지울 수 없다.
+
+### `dashboard.analyst_review_queue`: 분석가 검토 요청
+
+| 열 | 뜻 |
+| --- | --- |
+| `job_id`, `incident_id`, `queue_rank`, `host_ip`, `zeekad_role` | 사건 |
+| `zeekad_review_reason` | 멈춘 이유, 예: `decision_model=analyst_review` |
+| `requested_at` | 에이전트 흐름이 멈춘 시각 |
+| `zeekad_review_action` | `confirm`(조사 진행) 또는 `dismiss`(오탐으로 종료). 아직 결정 전이면 null |
+| `analyst`, `decided_at` | 결정한 사람과 시각 |
+| `zeekad_review_resumed_at` | 파이프라인이 멈춘 흐름을 재개해 끝낸 시각. 결정했지만 아직이면 null(보통 30초 안에 채워진다). 2026-11-19 추가(migration 014) |
+| `zeekad_review_resume_failed` | 재개가 실패했으면 true. 파이프라인 운영자가 명령줄로 다시 재개한다. 2026-11-19 추가 |
+
+판단 모델이 `analyst_review`를 고른 사건만 들어온다. "결정 전" 목록은 `zeekad_review_action IS NULL`이다.
+
+## 쓰기: 사건 상태 변경
+
+| 항목 | 값 |
+| --- | --- |
+| 계정 | `dashboard_rw`. 비밀번호는 `deploy/.env`의 `DASHBOARD_RW_PASSWORD`(환경 변수로 받는다) |
+| 권한 | 함수 `dashboard.transition_incident` 실행만. 표에 직접 INSERT·UPDATE할 수 없다 |
+
+```sql
+SELECT dashboard.transition_incident(
+    p_job        => 4,
+    p_incident   => 'cic17-fri|192.168.10.14|originator|1499428800',
+    p_to         => 'closed',          -- 'investigating' 또는 'closed'
+    p_actor      => 'analyst01',       -- 로그인한 사용자
+    p_reason     => '도메인 컨트롤러 정상 업무',
+    p_resolution => 'false_positive'   -- closed일 때만, 셋 중 하나
+);  -- 반환: 바뀐 상태
+```
+
+- 한 칸씩만 앞으로 간다: `open → investigating → closed`. 되돌리기와 건너뛰기는 함수가 거부한다(SQLSTATE `22023`). 사건이 없으면 `02000`이다.
+- `actor`와 `reason`은 비울 수 없다. 오류 메시지는 한국어 문장이라 그대로 사용자에게 보여 줘도 된다.
+- 같은 사건을 두 사람이 동시에 바꾸면 하나만 성공한다. 다른 하나는 "허용되지 않는 상태 변경"으로 거부된다(행 잠금).
+- 화면 권장: 버튼은 지금 상태에서 갈 수 있는 다음 상태만 보여 준다. 종료 버튼은 결론 세 가지 중 하나를 고르게 한다.
+
+## v2.1 보완(2026-11-17): 같은 캡처에 채점 작업이 여러 개일 때(Q54)
+
+- 정의: [012_incident_identity.sql](../db/migrations/012_incident_identity.sql). 기존 뷰의 열 이름과 뜻은 그대로다. 뷰 하나를 추가했다.
+- 배경: 실습망 캡처(`lab-YYYYMMDD`, DD-012·015)는 5분 파일이 올 때마다 그날을 다시 계산해 **같은 캡처에 작업이 여러 개** 생긴다. 같은 사건이 작업마다 다시 나온다. CIC·합성 캡처는 지금 캡처마다 작업이 하나다(모델 묶음을 바꾸면 늘어난다).
+- **사건의 정체는 `incident_id`다**(`캡처|자산|역할|시작 epoch`). 다시 계산해도 같은 사건이면 같다.
+  - 상태: `incident_id` 하나에 붙는다. 어느 작업에서 바꿔도 모든 작업의 `dashboard.incident_status`에 같은 상태가 보인다.
+  - 보고서·전송 판단·분석가 검토: 그 사건을 처리한 작업에 있다. 보통 처음 나온 작업이지만, 뒤 파일에서 창이 이어 붙어 사건이 늘어나면 그 작업에서 다시 만든다(2026-11-18 보완, [DD-016](design-decisions/DD-016-lab-capture-coverage-and-report-refresh.md) 결정 3). 최신 보고서는 `zeekad_report_job_id`가 가리킨다.
+  - Slack 기록: 처음 알린 작업에만 있다. 다시 만든 보고서는 Slack에 다시 보내지 않으므로(DD-016 결정 4) `zeekad_report_job_id`의 작업에는 Slack 기록이 없을 수 있다. **사건의 Slack 기록은 `incident_id`로 찾는다.**
+
+### `dashboard.latest_incident_queue`: 캡처별 최신 큐(화면의 "조사 큐"는 이 뷰를 쓴다)
+
+캡처마다 가장 최근 성공 작업(가장 큰 `job_id`)의 사건만 나온다. `incident_queue`의 열 전부에 아래 열이 붙는다.
+
+| 열 | 타입 | 뜻 |
+| --- | --- | --- |
+| `zeekad_report_job_id` | bigint | 이 사건의 최신 보고서·판단·검토가 있는 작업. 없으면 null. **`incident_reports`·`send_decisions`·`analyst_review_queue`와 조인할 때는 `job_id` 대신 이 값을 쓴다**. `slack_deliveries`는 `incident_id`로 찾는다(DD-016) |
+| `zeekad_report_kind` | text | `llm`·`template`, 보고서가 없으면 null |
+| `zeekad_would_send` | boolean | 실제 전송 여부, 판단이 없으면 null |
+| `zeekad_status`, `zeekad_resolution`, `status_updated_at` | | 사건 ID 기준 상태 |
+| `zeekad_review_action`, `zeekad_review_pending` | | 분석가 검토 결정, 결정 전이면 pending이 true |
+
+- 결합 v2(2026-11-19, [DD-018](design-decisions/DD-018-fusion-merge-overlaps.md))부터 사건 창(`incident_window`)은 처음 뽑은 모델의 창이 아니라 겹쳐 꼽은 모든 모델 창의 합이다. 표·뷰 구조는 같다. 어느 결합 버전으로 만든 작업인지는 작업의 `bundle_id`로 안다.
+- 사건 상세 화면의 모델 점수(`incident_model_scores`)와 근거 API는 큐에 나온 `job_id`(최신 작업)를 쓴다. 근거는 최신 작업 기준이라 사건이 길어졌으면 보고서보다 연결 수가 많을 수 있다.
+- 상태 변경 함수(`dashboard.transition_incident`)의 호출 모양은 그대로다. `p_job`에는 화면이 보고 있는 작업(최신 큐의 `job_id`)을 넣는다. 그 작업에 그 사건이 없으면 `02000`으로 거부된다.
+- 확인(2026-11-17): `lab-20261201` 최신 작업 23의 사건 6건 중 4건은 보고서 작업 21, 2건은 23. 작업 23에서 `.80`을 확인 중으로 바꾸자 작업 21·22·23 모두 확인 중으로 보였고, 이전 작업 21에서 같은 변경을 다시 보내면 "허용되지 않는 상태 변경: investigating → investigating"으로 거부됐다.
+
+## 쓰기: 분석가 검토 결정(2026-11-19 추가, [DD-019](design-decisions/DD-019-review-decision-path.md))
+
+| 항목 | 값 |
+| --- | --- |
+| 계정 | `dashboard_rw`(상태 변경과 같은 계정) |
+| 권한 | 함수 `dashboard.decide_review` 실행만. 표에 직접 쓸 수 없다 |
+
+```sql
+SELECT dashboard.decide_review(
+    p_job      => 41,                  -- 검토 요청의 job_id(analyst_review_queue의 job_id)
+    p_incident => 'lab-20261119|10.10.0.102|originator|1795062900',
+    p_action   => 'dismiss',           -- 'confirm'(조사 진행) 또는 'dismiss'(오탐으로 종료)
+    p_analyst  => 'analyst01',         -- 로그인한 사용자
+    p_note     => '정상 업무'            -- 선택
+);  -- 반환: 결정 값
+```
+
+- 함수는 결정을 기록할 뿐이다. 멈춘 에이전트 흐름은 파이프라인이 찾아 재개한다(감시 주기 30초). 재개되면 `confirm`은 사건 상태를 `investigating`으로, `dismiss`는 `investigating → closed(false_positive)`로 바꾸고 상태 이력의 `actor`·`reason`에 결정한 사람과 메모가 들어간다. 결과는 `zeekad_review_resumed_at`과 상태 뷰로 확인한다.
+- 거부(SQLSTATE): 결정 값이 둘 중 하나가 아니거나 `p_analyst`가 비었으면 `22023`, 검토 요청이 없으면 `02000`, 이미 결정한 요청이면 `22023`. 결정은 한 번뿐이다.
+- 화면 권장: 결정 버튼은 `zeekad_review_action IS NULL`인 요청에만 보여 준다. 같은 사건의 요청이 여러 작업에 있으면 `zeekad_report_job_id`의 것만 보여 준다.
+- 상태를 대시보드에서 먼저 바꿔도 된다. 흐름이 재개될 때 이미 지난 상태는 건너뛴다.
+
+## 분석가 결론 집계(2026-11-19 추가, migration 017, Q61)
+
+### `dashboard.feedback_summary`: 캡처 × 묶음 버전 × 처음 뽑은 모델별 결론 집계
+
+캡처의 최신 큐(`latest_incident_queue`) 사건을 센다. `zeekad_picked_by = 'all'`은 그 캡처·묶음 전체 행이다.
+
+| 열 | 타입 | 뜻 |
+| --- | --- | --- |
+| `capture_id`, `bundle_id`, `zeekad_picked_by` | text | 집계 단위 |
+| `incidents`, `alerted` | bigint | 큐의 사건 수, 그중 Slack으로 알린 사건 수(`incident_id` 기준) |
+| `resolved`, `true_positive`, `false_positive`, `benign` | bigint | 종료 결론이 난 사건 수와 결론별 수 |
+| `zeekad_precision` | numeric | 실제 공격 ÷ 결론 난 사건. 결론이 없으면 null. benign은 공격이 아닌 쪽에 센다 |
+| `zeekad_alert_precision` | numeric | 알린 사건 중 결론 난 것에서의 실제 공격 비율 |
+| `zeekad_alert_resolved_rate` | numeric | 알린 사건 중 결론 난 비율. 낮으면 정밀도를 믿기 어렵다 |
+
+- 라벨 없는 운영에서 쌓이는 유일한 라벨(분석가 종료 결론)로 알림 품질을 본다. 놓친 공격(재현율)은 알 수 없다.
+- 화면 제안: 정밀도 옆에 결론 수(`resolved`)와 결론 비율을 같이 보여 준다(예: "정밀도 0.60, 결론 5/18").
+
+## 알려진 빈칸(v2에서 다루지 않음)
+
+1. ~~대시보드에서 분석가 검토를 끝내는 방법이 없다.~~ 2026-11-19 해결: 위 "쓰기: 분석가 검토 결정"(DD-019). Q50의 원안(근거 API가 흐름을 재개)은 쓰지 않았다. API는 읽기 전용 그대로다.

@@ -1,0 +1,10 @@
+{
+  "config_id": "assets.lab.v1",
+  "schema_version": 1,
+  "dataset": "lab (DD-012·013)",
+  "note": "실습망 내부 대역. 지금 값은 시험 PCAP(tests/pcap_fixture.py)의 대역이다. Kali 시험 전에 실습망 대역으로 바꾼다(docs/live-pipeline.md).",
+  "internal_networks": [
+    "10.10.0.0/24"
+  ],
+  "scoring_rule": "Only host addresses are scored. The network and broadcast address of each internal network are excluded. The rule is applied per role; connection records are never deleted."
+}

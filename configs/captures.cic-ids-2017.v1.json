@@ -1,0 +1,19 @@
+{
+  "config_id": "captures.cic-ids-2017.v1",
+  "schema_version": 1,
+  "dataset": "CIC-IDS-2017",
+  "source": "FINAL_PROJECT_DESIGN.md section 6.1",
+  "note": "capture_id와 원본 PCAP·Zeek 실행 폴더·용도의 대응. pcap 경로는 CIC-IDS-2017/ 기준이다.",
+  "usages": {
+    "train_holdout": "학습과 보류. 캡처의 split_fraction 지점으로 나눈다",
+    "development": "파이프라인·대응·사각지대 개발 점검. 성능으로 설정을 고르지 않는다",
+    "retrospective_eval": "동결 후 회고적 평가. 독립 테스트라고 부르지 않는다"
+  },
+  "captures": [
+    {"capture_id": "cic17-mon", "pcap": "PCAPs/Monday-WorkingHours.pcap", "zeek_run_dir": "outputs/zeek/monday/run-01", "usage": "train_holdout"},
+    {"capture_id": "cic17-tue", "pcap": "PCAPs/Tuesday-WorkingHours.pcap", "zeek_run_dir": "outputs/zeek/tuesday/run-01", "usage": "development"},
+    {"capture_id": "cic17-wed", "pcap": "PCAPs/Wednesday-workingHours.pcap", "zeek_run_dir": "outputs/zeek/wednesday/run-01", "usage": "retrospective_eval"},
+    {"capture_id": "cic17-thu", "pcap": "PCAPs/Thursday-WorkingHours.pcap", "zeek_run_dir": "outputs/zeek/thursday/run-01", "usage": "retrospective_eval"},
+    {"capture_id": "cic17-fri", "pcap": "PCAPs/Friday-WorkingHours.pcap", "zeek_run_dir": "outputs/zeek/friday/run-01", "usage": "retrospective_eval"}
+  ]
+}

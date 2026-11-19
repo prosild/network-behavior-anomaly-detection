@@ -1,0 +1,24 @@
+{
+  "config_id": "rag-query-set.v1",
+  "status": "frozen",
+  "frozen_at": "2026-11-14 (사용자 확인). 고정 전에는 어떤 검색 결과도 보지 않았다. 바꾸려면 v2를 새로 만든다",
+  "note": "질의는 단계 5b에서 코드가 근거(evidence.v1)로 만들 문장과 같은 꼴이다: Zeek로 관측 가능한 네트워크 행동만 쓴다. 기대 기법 중 하나라도 상위 k에 있으면 적중이다. ATT&CK 매핑은 가설이다(설계 9.2절).",
+  "queries": [
+    {"id": "q01", "source": "cic17-ep-001 FTP-Patator", "text": "Many failed FTP logins (530 replies) from one external source to an internal FTP server on port 21 within minutes", "expected": ["T1110", "T1110.001", "T1110.003"]},
+    {"id": "q02", "source": "cic17-ep-002 SSH-Patator", "text": "Repeated SSH authentication failures from one external source to an internal server on port 22", "expected": ["T1110", "T1110.001", "T1110.003"]},
+    {"id": "q03", "source": "cic17-ep-003~004 DoS slowloris/slowhttptest", "text": "Hundreds of long-lived, partially completed HTTP connections held open to one web server from a single source", "expected": ["T1499", "T1499.002", "T1499.003"]},
+    {"id": "q04", "source": "cic17-ep-005~006 DoS Hulk/GoldenEye", "text": "Very high rate of HTTP requests to a web server on port 80 from one source, most connections reset by the server", "expected": ["T1499", "T1499.002", "T1499.003", "T1498", "T1498.001"]},
+    {"id": "q05", "source": "cic17-ep-007 Heartbleed", "text": "Repeated TLS connections to a public-facing server returning unusually large responses with no application data, consistent with exploitation of a TLS service", "expected": ["T1190"]},
+    {"id": "q06", "source": "cic17-ep-008 Web brute force", "text": "Many HTTP POST requests to a web application login page from one source, with repeated failed responses", "expected": ["T1110", "T1110.001", "T1110.003"]},
+    {"id": "q07", "source": "cic17-ep-009~010 XSS/SQL injection", "text": "HTTP requests to a public web application containing many special characters in URIs and producing server errors", "expected": ["T1190"]},
+    {"id": "q08", "source": "cic17-ep-011 Infiltration scan", "text": "An internal workstation connects to many ports on many other internal hosts, most connections rejected", "expected": ["T1046", "T1018"]},
+    {"id": "q09", "source": "cic17-ep-016 PortScan", "text": "One external source probes many TCP ports of an internal server in a short time, most attempts rejected or unanswered", "expected": ["T1046", "T1595", "T1595.001", "T1595.002"]},
+    {"id": "q10", "source": "cic17-ep-017 DDoS LOIC", "text": "Flood of HTTP connections to a web server overwhelming it, coming through one address", "expected": ["T1498", "T1498.001", "T1499", "T1499.002"]},
+    {"id": "q11", "source": "cic17-ep-015 Botnet ARES", "text": "Several internal hosts periodically contact the same external server over HTTP at regular intervals", "expected": ["T1071", "T1071.001", "T1029"]},
+    {"id": "q12", "source": "synthetic beacon_https", "text": "Internal host makes small TLS connections to one rarely seen external IP on port 443 at regular intervals of about five minutes for two hours", "expected": ["T1071", "T1071.001", "T1573", "T1573.002", "T1029"]},
+    {"id": "q13", "source": "synthetic slow_exfil", "text": "Internal host uploads several megabytes over TLS to a rarely seen external IP every ten minutes, much more data sent than received", "expected": ["T1041", "T1048", "T1048.002", "T1029", "T1030", "T1567"]},
+    {"id": "q14", "source": "synthetic dns_tunnel", "text": "Internal host sends many DNS A queries with long random-looking subdomains of one domain to the internal resolver every few seconds", "expected": ["T1071.004", "T1572", "T1048", "T1048.003"]},
+    {"id": "q15", "source": "synthetic lateral_smb", "text": "Internal host obtains Kerberos service tickets, maps the ADMIN$ SMB share on another internal host, writes an executable file, then creates and starts a service over DCE-RPC svcctl", "expected": ["T1021.002", "T1569.002", "T1543.003", "T1570"]},
+    {"id": "q16", "source": "synthetic internal_scan", "text": "Internal host slowly connects to six ports on six internal hosts over an hour, many connections rejected", "expected": ["T1046"]}
+  ]
+}

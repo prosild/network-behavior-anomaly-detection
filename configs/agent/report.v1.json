@@ -1,0 +1,10 @@
+{
+  "config_id": "agent-report.v1",
+  "note": "단계 5b-2 LLM 1회 보고서(설계 9.1절). 개발 세트로 다듬고 평가 세트 전에 동결한다(9.2절). 요청 모델 ID와 실제 응답 model_version이 다를 수 있어 호출마다 응답 버전을 기록한다(stage-5 여섯째 작업). 프롬프트 v1은 dev 첫 실행(20261116T133747Z-dev)에 썼고, 검증 실패 원인을 보고 v2로 바꿨다.",
+  "model": "gemini-3.7-flash",
+  "api_version": "v1beta",
+  "temperature": 0,
+  "timeout_seconds": 90,
+  "retries": 1,
+  "system_prompt": "configs/agent/prompts/report-system.v2.txt"
+}

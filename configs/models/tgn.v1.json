@@ -1,0 +1,135 @@
+{
+  "config_id": "tgn.v1",
+  "schema_version": 1,
+  "decision": "docs/design-decisions/DD-007-tgn-event-graph.md",
+  "data": {
+    "fit_split": "cic17-mon split == train 이벤트만으로 어휘·표준화 값을 정한다",
+    "event_order": [
+      "capture 순서(월→금)",
+      "write_ts",
+      "source_row_number"
+    ],
+    "time_field": "write_ts",
+    "vocab_min_count": 2,
+    "vocab_note": "0 = 값 없음(그 로그가 없음), 1 = 모름(train에 없거나 min_count 미만)",
+    "categorical": [
+      "direction",
+      "port_group",
+      "proto",
+      "service",
+      "conn_state",
+      "dns_qtype",
+      "dns_rcode",
+      "http_method",
+      "http_status_class",
+      "ssl_version",
+      "ssl_state",
+      "ssh_auth",
+      "smb_share_type",
+      "krb_request_type",
+      "dce_operation"
+    ],
+    "history_max_len": 12,
+    "numeric_log1p": [
+      "duration",
+      "orig_bytes",
+      "resp_bytes",
+      "orig_pkts",
+      "resp_pkts",
+      "dns_n",
+      "dns_query_len_max",
+      "dns_nxdomain_n",
+      "http_n",
+      "http_uri_len_max",
+      "http_error_n",
+      "http_req_body_sum",
+      "http_resp_body_sum",
+      "ssh_auth_attempts",
+      "ftp_n",
+      "ftp_pass_n",
+      "ftp_fail_n",
+      "smb_map_n",
+      "smb_file_n",
+      "krb_n",
+      "krb_fail_n",
+      "dce_n",
+      "ntlm_n",
+      "ntlm_fail_n"
+    ],
+    "numeric_raw": [
+      "dns_query_entropy",
+      "http_uri_special_max",
+      "duration_missing"
+    ],
+    "numeric_note": "없는 값은 0(로그 없음)으로 둔 뒤 log1p와 train 평균·표준편차 표준화. duration 결측은 duration_missing=1로 표시",
+    "numeric_std_floor": 1.0,
+    "numeric_std_floor_note": "2026-11-06 추가(학습·평가 전). 희소 특징의 train 표준편차가 0.005~0.05라 표준화 값이 최대 158이 되어 복원 손실을 지배했다. 월요일 train 분포만 보고 고쳤다",
+    "node_features": {
+      "ip_hash_dim": 16,
+      "hash": "옥텟 계층 접두사(a, a.b, a.b.c, a.b.c.d)마다 sha256 부호 해시를 더한다",
+      "flags": [
+        "is_internal",
+        "is_scored_asset",
+        "is_private",
+        "is_ipv6"
+      ]
+    },
+    "dns_loss_weight": 0.2,
+    "dns_rule": "proto == udp 이고 받는 쪽 포트 53, 또는 service에 dns 포함"
+  },
+  "fixed_before_eval": "data 절 2026-11-06(같은 날 numeric_std_floor 추가). model·training·score 절 2026-11-06. 모두 TGN 학습·화~금 평가 전",
+  "model": {
+    "edge_encoder": {
+      "categorical_dim": 4,
+      "history_dim": 4,
+      "numeric_dim": 16,
+      "out_dim": 32,
+      "note": "범주 15개는 각자 nn.Embedding, history 12자는 nn.Embedding 후 펼침, 수치 27개는 nn.Linear. 셋을 concat해 Linear(→32)+ReLU"
+    },
+    "raw_msg_layout": "[범주 id 15 | history id 12 | 표준화 수치 27] = 54열 float. 엣지 모듈이 앞 27열을 정수로 되돌려 쓴다",
+    "memory_dim": 64,
+    "time_dim": 16,
+    "message": "concat(메모리_출발, 메모리_도착, 엣지 모듈(raw_msg), 시간 인코딩). PyG가 출발·도착용 메시지 함수를 따로 복사한다(TGN 논문 구조)",
+    "aggregator": "last",
+    "embedding": {
+      "type": "TransformerConv",
+      "out_dim": 64,
+      "heads": 2,
+      "dropout": 0.1,
+      "neighbors": 10,
+      "node_input": "메모리 + Linear(노드 특징 20→64)",
+      "edge_attr": "시간 인코딩(상대 시각) + 별도 엣지 모듈"
+    },
+    "decoder": {
+      "input": "concat(z_출발, z_도착). 순서가 방향을 나타낸다",
+      "hidden": 128,
+      "outputs": "범주 15개 logits, history 12자×27 logits, 수치 27개"
+    }
+  },
+  "training": {
+    "events": "cic17-mon split == train 이벤트(시간순, 연속 구간)",
+    "batch_events": 200,
+    "epochs": 10,
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "seed": 42,
+    "device": "cpu",
+    "epoch_start": "매 epoch 메모리와 이웃 표를 초기화하고 train 처음부터 다시 흐른다",
+    "loss": "이벤트 손실 = 범주 CE 평균 + history CE 평균 + 수치 MSE 평균. batch 손실 = dns_weight 가중 평균(DNS 0.2)",
+    "selection": "고정 epoch. 보류 구간은 임계값용이라 epoch 선택에 쓰지 않는다",
+    "chosen_from": "lr 1e-4·1e-3을 8 epoch씩 돌려 train 손실만 비교했다(1e-3: 1.37, 1e-4: 1.61, 둘 다 감소 중). 표준편차 하한 추가 전 데이터였다. 보류·화~금은 보지 않았다"
+  },
+  "score": {
+    "stream": "캡처(하루)마다 메모리와 이웃 표를 초기화하고 그날 이벤트를 처음부터 시간순으로 흘린다. 학습과 같은 조건(빈 메모리에서 시작)이다. 하루 안에서는 운영처럼 갱신한다",
+    "order": "batch마다 점수를 먼저 매기고 그 뒤 메모리·이웃을 갱신한다(점수는 갱신 전)",
+    "primary": "recon: 이벤트 손실(가중치 없음). DNS도 똑같이 채점한다",
+    "secondary": "latent_shift: 같은 batch의 갱신 전후 노드 메모리 L2 거리. originator 창은 출발 노드, responder 창은 도착 노드의 값",
+    "combination": "두 점수를 결합하지 않는다. 각각 따로 평가하고 둘 다 보고한다. 결합은 ML·DL 결합 결정(DD-006 수정 절)에서 정한다",
+    "window_aggregation": "(capture, asset, role, window_start)의 최댓값. 자산이 orig이면 originator, resp이면 responder 창",
+    "threshold": "월요일 보류 창 점수의 p95(기존 평가기)",
+    "diagnostics": [
+      "NAT 제외: 상대가 172.16.0.1인 이벤트를 뺀 창 최댓값(없으면 0)",
+      "공격 구간의 창별 점수 변화(갱신으로 익숙해지는지)"
+    ]
+  }
+}

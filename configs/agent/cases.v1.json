@@ -1,0 +1,47 @@
+{
+  "config_id": "agent-cases.v1",
+  "note": "단계 5b 보고서·전송 판단 사례(설계 9.2절). 개발(화·수)로 프롬프트를 만들고, 평가(목·금)는 프롬프트·모델 ID·채점표를 동결한 뒤 출력만 비교한다. 사건 내용은 이미 노출됐으므로 독립 평가라고 부르지 않는다. 사례는 각 캡처의 결합 큐(마지막 성공 작업) 상위 N건이다. 합성 캡처는 같은 요일 CIC 캡처에도 있는 사건(자산·역할·시작 시각이 같은 것)을 빼고 고른다. 합성 큐 상위의 절반이 CIC 사건과 겹치기 때문이다.",
+  "internal_networks_from": "configs/assets.cic-ids-2017.v1.json",
+  "sets": {
+    "dev": [
+      {
+        "capture_id": "cic17-tue",
+        "top": 10
+      },
+      {
+        "capture_id": "cic17-wed",
+        "top": 10
+      },
+      {
+        "capture_id": "syn1-tue",
+        "top": 5,
+        "exclude_same_as": "cic17-tue"
+      },
+      {
+        "capture_id": "syn1-wed",
+        "top": 5,
+        "exclude_same_as": "cic17-wed"
+      }
+    ],
+    "eval": [
+      {
+        "capture_id": "cic17-thu",
+        "top": 10
+      },
+      {
+        "capture_id": "cic17-fri",
+        "top": 10
+      },
+      {
+        "capture_id": "syn1-thu",
+        "top": 5,
+        "exclude_same_as": "cic17-thu"
+      },
+      {
+        "capture_id": "syn1-fri",
+        "top": 5,
+        "exclude_same_as": "cic17-fri"
+      }
+    ]
+  }
+}

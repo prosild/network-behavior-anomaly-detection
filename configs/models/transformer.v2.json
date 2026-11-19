@@ -1,0 +1,40 @@
+{
+  "config_id": "transformer.v2",
+  "schema_version": 1,
+  "source": "docs/design-decisions/DD-002-transformer-langgraph-rag.md 1절, DD-006 수정 절 2번(확장 특징 재학습)",
+  "frozen_at": "2026-11-06",
+  "note": "v1과 모델·학습·점수 설정이 같다. 입력만 Gold v2(18 + 로그 24 = 42개 특징)다. 확장 전후 비교용이다. 결과 노출 이후의 변경이다(DD-006).",
+  "sequence": {
+    "context_windows": 12,
+    "context_rule": "같은 캡처·자산·역할에서 대상 창 바로 앞의 12개 5분 칸(1시간). 다른 캡처의 창은 쓰지 않는다.",
+    "token": "표준화한 42개 특징 + role_responder + is_inactive + is_outside = 45차원",
+    "inactive_rule": "캡처 안인데 Gold 행이 없는 칸(연결 0개). 18개 특징은 0(학습 평균), is_inactive=1",
+    "outside_rule": "캡처 첫 칸보다 앞선 칸. 18개 특징은 0, is_outside=1. 마스크 대신 표시를 써서 모든 대상 창이 점수를 받는다",
+    "targets": "Gold 행이 있는 창(활동 있는 창)만 대상이다. 학습 대상은 월요일 train 행만이다",
+    "preprocess": "baselines.Preprocessor(log1p+학습 중앙값 대치)를 train에 적합한 뒤, train 평균·표준편차로 표준화. 표준편차 0이면 1로 둔다"
+  },
+  "model": {
+    "d_model": 32,
+    "nhead": 4,
+    "num_layers": 2,
+    "dim_feedforward": 64,
+    "dropout": 0.1,
+    "positional": "학습하는 위치 임베딩(길이 12)",
+    "readout": "마지막 칸(대상 직전 창)의 출력 → Linear(32, 42)"
+  },
+  "training": {
+    "loss": "MSE(18개 표준화 특징)",
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "batch_size": 64,
+    "epochs": 100,
+    "seed": 42,
+    "selection": "고정 epoch. 보류 손실은 기록만 하고 고르는 데 쓰지 않는다(보류는 임계값용)"
+  },
+  "score": "대상 창 42개 표준화 특징의 평균 제곱 오차. 클수록 이상하다",
+  "inputs": {
+    "gold": "outputs/gold/conn_features_v2",
+    "sequences": "outputs/sequences/transformer_v2",
+    "model_name": "transformer_v2"
+  }
+}

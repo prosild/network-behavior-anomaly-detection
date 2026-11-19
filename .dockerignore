@@ -1,0 +1,10 @@
+# 이미지에는 코드·설정만 넣는다(deploy/pipeline/Dockerfile). 데이터와 비밀값은 넣지 않는다.
+*
+!zeek_ad/
+!scripts/
+!configs/
+!db/
+!tests/
+!deploy/pipeline/requirements.runtime.txt
+!deploy/pipeline/constraints.runtime.txt
+**/__pycache__

@@ -1,0 +1,28 @@
+# Original inputs and generated data stay local.
+/CIC-IDS-2017/
+/CICIDS2017_improved/
+/outputs/
+/practice/
+
+# Local Python environment and caches.
+/.venv/
+__pycache__/
+*.py[cod]
+
+# 로컬 비밀값(DB 비밀번호). 예시는 deploy/.env.example.
+/deploy/.env
+
+# 실습망에서 받은 트래픽(PCAP)은 로컬에만 둔다(DD-012).
+/data/
+
+# MLflow를 추적 주소 없이 부르면 현재 폴더에 생기는 기본 저장소. 이 프로젝트의 기록은 PostgreSQL mlflow DB에 있다.
+/mlflow.db
+/mlruns/
+
+# 공개 저장소에 넣지 않는 로컬 문서(사용자 결정 2026-11-19, 설계 질문 기록 Q62). 파일은 로컬에 그대로 둔다.
+# CLAUDE.md·AGENTS.md: AI 작업 안내(로컬 세션용). 강의 정리 2개: 보안 강의 자료 기반. historical/: 옛 설계 검증 계산 백업.
+/CLAUDE.md
+/AGENTS.md
+/docs/security-course-all-session-summary.md
+/docs/zeek-ad-enterprise-security-integration.md
+/historical/

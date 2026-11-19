@@ -1,0 +1,460 @@
+{
+  "font": {
+    "name": "NanumBarunGothic",
+    "path": "/usr/share/fonts/truetype/nanum/NanumBarunGothic.ttf"
+  },
+  "inputs": [
+    {
+      "path": "outputs/events/tgn_v1/manifest.json",
+      "size_bytes": 5217,
+      "sha256": "19009680496834613479290b34dbe0ca0a9e40575e363002046a1a9a2b738df9"
+    },
+    {
+      "path": "outputs/gold/conn_features_v2/manifest.json",
+      "size_bytes": 4299,
+      "sha256": "0e540d805e4ee275504af73c56798d3de896c0e809d71e967965a1f7c4194392"
+    }
+  ],
+  "silver_daily_missing_and_zeros": [
+    {
+      "capture_id": "cic17-mon",
+      "rows": 375432,
+      "duration_missing": 6724,
+      "duration_orig_resp_all_missing": 6724,
+      "orig_bytes_zero": 10523,
+      "resp_bytes_zero": 13312,
+      "service_missing": 19475,
+      "proto_counts": {
+        "udp": 235361,
+        "tcp": 139899,
+        "icmp": 152,
+        "unknown_transport": 20
+      }
+    },
+    {
+      "capture_id": "cic17-tue",
+      "rows": 323342,
+      "duration_missing": 3624,
+      "duration_orig_resp_all_missing": 3624,
+      "orig_bytes_zero": 12422,
+      "resp_bytes_zero": 15575,
+      "service_missing": 17592,
+      "proto_counts": {
+        "udp": 209425,
+        "tcp": 113718,
+        "icmp": 182,
+        "unknown_transport": 17
+      }
+    },
+    {
+      "capture_id": "cic17-wed",
+      "rows": 509362,
+      "duration_missing": 17744,
+      "duration_orig_resp_all_missing": 17744,
+      "orig_bytes_zero": 18382,
+      "resp_bytes_zero": 22672,
+      "service_missing": 40153,
+      "proto_counts": {
+        "tcp": 297745,
+        "udp": 211554,
+        "icmp": 50,
+        "unknown_transport": 13
+      }
+    },
+    {
+      "capture_id": "cic17-thu",
+      "rows": 363788,
+      "duration_missing": 5471,
+      "duration_orig_resp_all_missing": 5471,
+      "orig_bytes_zero": 84191,
+      "resp_bytes_zero": 87050,
+      "service_missing": 90929,
+      "proto_counts": {
+        "udp": 190691,
+        "tcp": 172872,
+        "icmp": 197,
+        "unknown_transport": 28
+      }
+    },
+    {
+      "capture_id": "cic17-fri",
+      "rows": 547353,
+      "duration_missing": 3558,
+      "duration_orig_resp_all_missing": 3558,
+      "orig_bytes_zero": 172034,
+      "resp_bytes_zero": 174452,
+      "service_missing": 177065,
+      "proto_counts": {
+        "tcp": 350464,
+        "udp": 196692,
+        "icmp": 178,
+        "unknown_transport": 19
+      }
+    }
+  ],
+  "protocol_log_counts": [
+    {
+      "capture_id": "cic17-mon",
+      "events": 375432,
+      "community_id": 375432,
+      "dns_n": 225855,
+      "http_n": 26279,
+      "ssl_version": 90824,
+      "ssh_auth_success": 1036,
+      "ftp_n": 459,
+      "smb_map_n": 287,
+      "krb_n": 1051,
+      "dce_n": 261,
+      "ntlm_n": 37,
+      "split_null": 0
+    },
+    {
+      "capture_id": "cic17-tue",
+      "events": 323342,
+      "community_id": 323342,
+      "dns_n": 201163,
+      "http_n": 22806,
+      "ssl_version": 62637,
+      "ssh_auth_success": 3911,
+      "ftp_n": 4492,
+      "smb_map_n": 370,
+      "krb_n": 1064,
+      "dce_n": 377,
+      "ntlm_n": 35,
+      "split_null": 0
+    },
+    {
+      "capture_id": "cic17-wed",
+      "events": 509362,
+      "community_id": 509362,
+      "dns_n": 204675,
+      "http_n": 192066,
+      "ssl_version": 64333,
+      "ssh_auth_success": 1051,
+      "ftp_n": 533,
+      "smb_map_n": 350,
+      "krb_n": 866,
+      "dce_n": 313,
+      "ntlm_n": 33,
+      "split_null": 0
+    },
+    {
+      "capture_id": "cic17-thu",
+      "events": 363788,
+      "community_id": 363788,
+      "dns_n": 183041,
+      "http_n": 22200,
+      "ssl_version": 55578,
+      "ssh_auth_success": 1056,
+      "ftp_n": 522,
+      "smb_map_n": 449,
+      "krb_n": 812,
+      "dce_n": 392,
+      "ntlm_n": 179,
+      "split_null": 0
+    },
+    {
+      "capture_id": "cic17-fri",
+      "events": 547353,
+      "community_id": 547353,
+      "dns_n": 188870,
+      "http_n": 119483,
+      "ssl_version": 51120,
+      "ssh_auth_success": 970,
+      "ftp_n": 477,
+      "smb_map_n": 344,
+      "krb_n": 955,
+      "dce_n": 352,
+      "ntlm_n": 33,
+      "split_null": 0
+    }
+  ],
+  "gold_v2_total_windows": 8277,
+  "gold_v2_split_role_summary": [
+    {
+      "capture_id": "cic17-fri",
+      "split": "capture_edge",
+      "role": "originator",
+      "windows": 13
+    },
+    {
+      "capture_id": "cic17-fri",
+      "split": "capture_edge",
+      "role": "responder",
+      "windows": 8
+    },
+    {
+      "capture_id": "cic17-fri",
+      "split": "retrospective_eval",
+      "role": "originator",
+      "windows": 1246
+    },
+    {
+      "capture_id": "cic17-fri",
+      "split": "retrospective_eval",
+      "role": "responder",
+      "windows": 354
+    },
+    {
+      "capture_id": "cic17-mon",
+      "split": "capture_edge",
+      "role": "originator",
+      "windows": 22
+    },
+    {
+      "capture_id": "cic17-mon",
+      "split": "capture_edge",
+      "role": "responder",
+      "windows": 9
+    },
+    {
+      "capture_id": "cic17-mon",
+      "split": "holdout",
+      "role": "originator",
+      "windows": 235
+    },
+    {
+      "capture_id": "cic17-mon",
+      "split": "holdout",
+      "role": "responder",
+      "windows": 77
+    },
+    {
+      "capture_id": "cic17-mon",
+      "split": "split_boundary",
+      "role": "originator",
+      "windows": 12
+    },
+    {
+      "capture_id": "cic17-mon",
+      "split": "split_boundary",
+      "role": "responder",
+      "windows": 4
+    },
+    {
+      "capture_id": "cic17-mon",
+      "split": "train",
+      "role": "originator",
+      "windows": 958
+    },
+    {
+      "capture_id": "cic17-mon",
+      "split": "train",
+      "role": "responder",
+      "windows": 328
+    },
+    {
+      "capture_id": "cic17-thu",
+      "split": "capture_edge",
+      "role": "originator",
+      "windows": 14
+    },
+    {
+      "capture_id": "cic17-thu",
+      "split": "capture_edge",
+      "role": "responder",
+      "windows": 5
+    },
+    {
+      "capture_id": "cic17-thu",
+      "split": "retrospective_eval",
+      "role": "originator",
+      "windows": 1233
+    },
+    {
+      "capture_id": "cic17-thu",
+      "split": "retrospective_eval",
+      "role": "responder",
+      "windows": 484
+    },
+    {
+      "capture_id": "cic17-tue",
+      "split": "capture_edge",
+      "role": "originator",
+      "windows": 16
+    },
+    {
+      "capture_id": "cic17-tue",
+      "split": "capture_edge",
+      "role": "responder",
+      "windows": 5
+    },
+    {
+      "capture_id": "cic17-tue",
+      "split": "development",
+      "role": "originator",
+      "windows": 1255
+    },
+    {
+      "capture_id": "cic17-tue",
+      "split": "development",
+      "role": "responder",
+      "windows": 341
+    },
+    {
+      "capture_id": "cic17-wed",
+      "split": "capture_edge",
+      "role": "originator",
+      "windows": 15
+    },
+    {
+      "capture_id": "cic17-wed",
+      "split": "capture_edge",
+      "role": "responder",
+      "windows": 4
+    },
+    {
+      "capture_id": "cic17-wed",
+      "split": "retrospective_eval",
+      "role": "originator",
+      "windows": 1310
+    },
+    {
+      "capture_id": "cic17-wed",
+      "split": "retrospective_eval",
+      "role": "responder",
+      "windows": 329
+    }
+  ],
+  "scored_asset_role_counts": {
+    "192.168.10.25": {
+      "originator": 443,
+      "responder": 6,
+      "total": 449
+    },
+    "192.168.10.1": {
+      "originator": 11,
+      "responder": 493,
+      "total": 504
+    },
+    "192.168.10.15": {
+      "originator": 483,
+      "responder": 23,
+      "total": 506
+    },
+    "192.168.10.16": {
+      "originator": 489,
+      "responder": 23,
+      "total": 512
+    },
+    "192.168.10.9": {
+      "originator": 491,
+      "responder": 21,
+      "total": 512
+    },
+    "192.168.10.14": {
+      "originator": 492,
+      "responder": 22,
+      "total": 514
+    },
+    "192.168.10.17": {
+      "originator": 492,
+      "responder": 22,
+      "total": 514
+    },
+    "192.168.10.5": {
+      "originator": 490,
+      "responder": 24,
+      "total": 514
+    },
+    "192.168.10.51": {
+      "originator": 485,
+      "responder": 35,
+      "total": 520
+    },
+    "192.168.10.8": {
+      "originator": 485,
+      "responder": 65,
+      "total": 550
+    },
+    "192.168.10.19": {
+      "originator": 489,
+      "responder": 108,
+      "total": 597
+    },
+    "192.168.10.12": {
+      "originator": 491,
+      "responder": 119,
+      "total": 610
+    },
+    "192.168.10.50": {
+      "originator": 494,
+      "responder": 492,
+      "total": 986
+    },
+    "192.168.10.3": {
+      "originator": 494,
+      "responder": 495,
+      "total": 989
+    }
+  },
+  "monday_train_skew_log1p": {
+    "conn_count": {
+      "n_nonnull": 1286,
+      "skew_raw": 2.505,
+      "skew_log1p": -0.3,
+      "p50_raw": 144.5,
+      "p99_raw": 2194.5,
+      "max_raw": 4999.0
+    },
+    "out_bytes_sum": {
+      "n_nonnull": 1285,
+      "skew_raw": 6.895,
+      "skew_log1p": -1.89,
+      "p50_raw": 66452.0,
+      "p99_raw": 1441316.48,
+      "max_raw": 6837748.0
+    },
+    "duration_p95": {
+      "n_nonnull": 1285,
+      "skew_raw": 3.327,
+      "skew_log1p": -0.108,
+      "p50_raw": 23.542,
+      "p99_raw": 314.235,
+      "max_raw": 893.478
+    }
+  },
+  "gold_v2_nonzero_windows": {
+    "dns_query_count": 7707,
+    "dns_unique_query_count": 7247,
+    "dns_query_len_max": 7247,
+    "dns_query_entropy_max": 7130,
+    "dns_nxdomain_count": 2195,
+    "dns_rare_qtype_count": 4004,
+    "http_request_count": 4348,
+    "http_error_count": 618,
+    "http_uri_len_max": 4348,
+    "http_uri_special_max": 820,
+    "http_user_agent_count": 4313,
+    "http_host_count": 4320,
+    "ssl_conn_count": 5241,
+    "ssl_sni_count": 5227,
+    "ssl_no_sni_count": 255,
+    "ssl_not_established_count": 4229,
+    "ssh_auth_fail_count": 15,
+    "ssh_auth_attempts_sum": 2968,
+    "ftp_fail_count": 25,
+    "smb_map_count": 2138,
+    "smb_file_count": 1115,
+    "dce_op_count": 1501,
+    "krb_fail_count": 765,
+    "ntlm_fail_count": 0
+  },
+  "outputs": [
+    {
+      "path": "outputs/eda/01_silver_protocol_and_missing.png",
+      "size_bytes": 207695,
+      "sha256": "09f9574d50de8d5ba0d2ea66e20c0cda9756f50fa092f46ef52166d21db6964b"
+    },
+    {
+      "path": "outputs/eda/02_window_splits_and_roles.png",
+      "size_bytes": 240114,
+      "sha256": "63217280ca793f2c9dcce30b1f743dffb2003184b34c0083ce9d8dc9bf358422"
+    },
+    {
+      "path": "outputs/eda/03_feature_skew_log1p_and_sparsity.png",
+      "size_bytes": 475619,
+      "sha256": "71c0a468933be864829fcf50e127f853466655fc067d86396cfecd95b9168dcb"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "config_id": "agent-slack.v1",
+  "note": "DD-001 Slack 전송 규약. Slack 키가 없어 mode는 dry_run이다(DD-005): 보낼 메시지를 DB(slack_delivery)와 파일에 남기고 실제로 보내지 않는다. 키가 생기면 mode를 live로 바꾸고 토큰은 deploy/.env의 SLACK_BOT_TOKEN에만 둔다.",
+  "mode": "dry_run",
+  "channel": "#soc-alerts",
+  "api_base_url": "http://127.0.0.1:8000",
+  "max_claims": 3,
+  "max_text_chars": 1500,
+  "dry_run_log": "outputs/slack/dry-run.jsonl"
+}

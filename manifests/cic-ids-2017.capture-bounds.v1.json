@@ -1,0 +1,46 @@
+{
+  "manifest_id": "cic-ids-2017.capture-bounds.v1",
+  "schema_version": 1,
+  "config_id": "captures.cic-ids-2017.v1",
+  "tool": "Capinfos (Wireshark) 4.2.2 (Git v4.2.2 packaged as 4.2.2-1.1build3).",
+  "command": "capinfos -a -e -S -T -r <pcap>",
+  "meaning": "패킷 시각의 최솟값·최댓값(epoch 초, UTC). 파일 순서상 첫·마지막 패킷과 다를 수 있다.",
+  "captures": [
+    {
+      "capture_id": "cic17-mon",
+      "pcap": "PCAPs/Monday-WorkingHours.pcap",
+      "pcap_sha256": "f6eac599358f216b074338813a1cf7be3cc4e91d116e13efc0dc71f2cca11972",
+      "packet_time_min": "1499082958.598308",
+      "packet_time_max": "1499112094.472889"
+    },
+    {
+      "capture_id": "cic17-tue",
+      "pcap": "PCAPs/Tuesday-WorkingHours.pcap",
+      "pcap_sha256": "080c2250154c5a174c03660ed0f75a3858d41a27511ba716e780d7bcb1ec4c57",
+      "packet_time_min": "1499169212.364079",
+      "packet_time_max": "1499198431.076755"
+    },
+    {
+      "capture_id": "cic17-wed",
+      "pcap": "PCAPs/Wednesday-workingHours.pcap",
+      "pcap_sha256": "cd2674db7559a53f24bc03be3239b315700174ccaef72d10f5edc4c1a08f6186",
+      "packet_time_min": "1499254962.084372",
+      "packet_time_max": "1499285419.780725"
+    },
+    {
+      "capture_id": "cic17-thu",
+      "pcap": "PCAPs/Thursday-WorkingHours.pcap",
+      "pcap_sha256": "38f8b1bb276849bf1721f7c4de22bebfa7f59a74e52286d4c0a37edbb118fe01",
+      "packet_time_min": "1499342338.492265",
+      "packet_time_max": "1499371484.364012"
+    },
+    {
+      "capture_id": "cic17-fri",
+      "pcap": "PCAPs/Friday-WorkingHours.pcap",
+      "pcap_sha256": "beff0dcce1eebc9b2454582f4dc8ed0ba0112b2c619a710bf03af93147254cd0",
+      "packet_time_min": "1499428779.599128",
+      "packet_time_max": "1499457761.169108"
+    }
+  ],
+  "created_at_utc": "2026-11-05T00:38:05.582957+00:00"
+}

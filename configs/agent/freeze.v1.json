@@ -1,0 +1,61 @@
+{
+ "freeze_id": "agent-eval-freeze.v1",
+ "frozen_at": "2026-11-17T02:08:34Z",
+ "note": "설계 9.2절: 평가 세트(목·금) 전에 입력 규칙·프롬프트·모델 ID·판단 설정·채점 규칙을 동결한다. 이 파일들이 바뀌면 평가 결과와 맞지 않는다. 결정: 필수 전송 조건 그대로(사용자, 2026-11-17).",
+ "llm_model_requested": "gemini-3.7-flash",
+ "decision_model": "gemini-decision-1",
+ "files": [
+  {
+   "path": "zeek_ad/llm_input.py",
+   "sha256": "877ec7c2527b2820b86521240035cb8f8b6475a28c1a3eee121f7df5869333a6"
+  },
+  {
+   "path": "zeek_ad/rag.py",
+   "sha256": "02c2551d87ad0392ee8c206775dfb57d4ad11639daa0e927c8a5f56642ae41f4"
+  },
+  {
+   "path": "zeek_ad/llm_report.py",
+   "sha256": "00f205f2584e390d5219281da6c9e17466dabd9aa1c2dfcf1a63fe05d138e2a6"
+  },
+  {
+   "path": "zeek_ad/send_decision.py",
+   "sha256": "348e04d380ec1a07c76e15920485e874d9a0b87de6a68c7b6eb8478594e53ca6"
+  },
+  {
+   "path": "scripts/build_agent_inputs.py",
+   "sha256": "6e8c9068cb58e29b21beb90b6f331828bc8bd32d453c0614e4e8cd4054da9420"
+  },
+  {
+   "path": "scripts/run_agent_reports.py",
+   "sha256": "3d78540e75ceea7152dd2614b7c12a17254da8330e0bccd3f4815f2c6060d779"
+  },
+  {
+   "path": "scripts/run_send_decisions.py",
+   "sha256": "14d356c991884c59bdc199a1dc794929da5271211dcb9f408ee89fa74838aafb"
+  },
+  {
+   "path": "scripts/score_send_decisions.py",
+   "sha256": "8c05a5a57502dd596d8d02067f132fe83187db0a6a6a7380e851775f24b00d8e"
+  },
+  {
+   "path": "configs/agent/cases.v1.json",
+   "sha256": "40607b9a59c907fd8406db64d5f9f1c60f156ec28cd09b169c08f50e0ef381b2"
+  },
+  {
+   "path": "configs/rag/retrieval.v1.json",
+   "sha256": "9809b33071b2053194f3fcefb0be25367f95e489e740efc6cff2b0b4411c28c9"
+  },
+  {
+   "path": "configs/agent/report.v1.json",
+   "sha256": "f6834c2a2847ab48bc222a76501f09ed401c41b82253eb832a62d5347c1668aa"
+  },
+  {
+   "path": "configs/agent/prompts/report-system.v2.txt",
+   "sha256": "2516f0ffa3d26115841ef50af0b6dc483446d3b82fcd67440bd9e3399b9f9996"
+  },
+  {
+   "path": "configs/agent/send-decision.v1.json",
+   "sha256": "f9e599491d44c8440dfd9af826e7e9554db58f93dffc36d0a044ff8ec4b5874a"
+  }
+ ]
+}

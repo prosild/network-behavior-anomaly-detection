@@ -1,0 +1,23 @@
+{
+  "config_id": "new-external-peers.v1",
+  "schema_version": 1,
+  "decision": "docs/design-decisions/DD-006-behavior-detectors-reduced.md",
+  "detector": "new_external_peers",
+  "scores_dir": "outputs/diagnostics/new_external_peers_v1",
+  "description": "자명한 기준선 B. 창(자산, 역할, 5분)에서 월요일 train 창에 한 번도 상대로 나오지 않은 외부 IP의 고유 개수.",
+  "seen_set": {
+    "source": "cic17-mon의 split == train 창에 속한 역할 행의 상대 주소(peer_h). 모든 자산·역할을 합친다.",
+    "external": "configs/assets.cic-ids-2017.v1.json의 internal_networks 밖 주소"
+  },
+  "update_during_eval": false,
+  "score_column": "new_external_peer_count",
+  "missing_window_score": 0,
+  "threshold_rule": {
+    "type": "holdout_percentile",
+    "percentile": 95,
+    "minimum": 1
+  },
+  "threshold_note": "보류 p95가 1보다 작으면 모든 창이 후보가 되므로 최소 1(처음 보는 외부 상대가 하나 이상)로 둔다. 화~금 평가 전에 정했다.",
+  "deployable": false,
+  "fixed_before_eval": "2026-11-06"
+}

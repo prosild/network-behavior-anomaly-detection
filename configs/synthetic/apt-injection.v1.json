@@ -1,0 +1,80 @@
+{
+  "config_id": "synthetic-apt.v1",
+  "schema_version": 1,
+  "decision": "docs/design-decisions/DD-008-synthetic-apt-injection.md",
+  "frozen_at": "2026-11-06",
+  "note": "모델 점수를 보기 전에 고정한다. 바꾸면 v2로 만들고 이유를 기록한다.",
+  "seed": 20261106,
+  "source_zeek_run": "run-02",
+  "days": {
+    "syn1-tue": {"source_capture": "cic17-tue", "zeek_day": "tuesday"},
+    "syn1-wed": {"source_capture": "cic17-wed", "zeek_day": "wednesday"},
+    "syn1-thu": {"source_capture": "cic17-thu", "zeek_day": "thursday"},
+    "syn1-fri": {"source_capture": "cic17-fri", "zeek_day": "friday"}
+  },
+  "hosts": {
+    "infrastructure": {"dns_kerberos": "192.168.10.3"},
+    "attackers": ["192.168.10.5", "192.168.10.8", "192.168.10.9", "192.168.10.12", "192.168.10.14",
+                  "192.168.10.15", "192.168.10.16", "192.168.10.17", "192.168.10.19", "192.168.10.25"],
+    "windows_targets": ["192.168.10.5", "192.168.10.8", "192.168.10.9", "192.168.10.14", "192.168.10.15"],
+    "scan_targets": ["192.168.10.5", "192.168.10.8", "192.168.10.9", "192.168.10.12", "192.168.10.14",
+                     "192.168.10.15", "192.168.10.16", "192.168.10.17", "192.168.10.19", "192.168.10.25",
+                     "192.168.10.50", "192.168.10.51"],
+    "linux_hosts": ["192.168.10.12", "192.168.10.16", "192.168.10.17", "192.168.10.19", "192.168.10.50",
+                    "192.168.10.51"]
+  },
+  "external": {
+    "rule": "월요일 train 외부 IP가 많이 쓰는 /16 대역(상위 20개) 중 하나를 고르고, 다섯 날 어디에도 없는 주소를 만든다. 이상한 대역 자체로 티가 나지 않게 한다",
+    "prefix_top_k": 20,
+    "domain_tlds": ["com", "net"]
+  },
+  "schedule": {
+    "rule": "하루에 다섯 패턴을 한 번씩. 패턴마다 공격 호스트가 다르다. 캡처 양끝에서 30분 이상 떨어뜨린다",
+    "edge_margin_seconds": 1800,
+    "conflict_margin_seconds": 1800,
+    "conflict_rule": "합성 정답 창이 같은 (자산, 역할)의 CIC 정답 창이나 다른 합성 정답 창과 30분 안에 있으면 시작 시각을 다시 뽑는다",
+    "max_tries": 200
+  },
+  "write_delay_seconds": {
+    "note": "_write_ts = ts + duration + 지연 + U(0, 0.2). 월요일 conn의 (proto, conn_state)별 지연 중앙값",
+    "tcp:SF": 5.0, "tcp:RSTO": 5.0, "tcp:REJ": 0.5, "udp:SF": 10.0
+  },
+  "patterns": {
+    "beacon_https": {
+      "summary": "C2 beaconing. 공격 호스트가 새 외부 IP:443에 일정 간격(흔들림 포함)으로 작은 TLS 연결을 한다. 30분마다 C2 도메인을 DNS로 조회한다",
+      "duration_seconds": 7200, "interval_seconds": 300, "jitter": 0.2,
+      "orig_bytes": [300, 700], "resp_bytes": [400, 1600], "conn_duration": [0.3, 1.5],
+      "orig_pkts": [8, 12], "resp_pkts": [7, 11], "dns_every_seconds": 1800
+    },
+    "dns_tunnel": {
+      "summary": "DNS 터널 유출. 내부 DNS 서버에 긴 무작위 하위 도메인의 A 질의를 짧은 간격으로 보낸다(TXT보다 흔한 A로 숨긴다)",
+      "duration_seconds": 1800, "interval_seconds": [5, 15],
+      "label_len": [40, 56], "qtype": "A"
+    },
+    "lateral_smb": {
+      "summary": "측면 이동(impacket psexec 방식). 대상마다 Kerberos TGS → SMB ADMIN$ 연결·파일 쓰기 → DCE-RPC svcctl 서비스 생성·시작",
+      "targets": 4, "gap_seconds": [600, 1200],
+      "payload_bytes": [150000, 400000]
+    },
+    "slow_exfil": {
+      "summary": "느린 유출. 새 외부 IP:443에 약 10분마다 큰 업로드(수 MB) TLS 연결. 30분마다 DNS 조회",
+      "duration_seconds": 7200, "interval_seconds": 600, "jitter": 0.2,
+      "orig_bytes": [3000000, 8000000], "resp_bytes": [5000, 20000], "conn_duration": [20, 60],
+      "dns_every_seconds": 1800
+    },
+    "internal_scan": {
+      "summary": "느린 내부 정찰. 대상 6개 × 포트 6개를 섞어 한 번씩, 60~140초 간격으로 connect scan",
+      "targets": 6, "ports": [22, 135, 139, 445, 3389, 5985], "interval_seconds": [60, 140],
+      "open_rule": "Windows 대상의 135·139·445, Linux 대상의 22만 열려 있다(RSTO). 나머지는 닫힘(REJ)"
+    }
+  },
+  "truth": {
+    "rule": "주입한 conn의 창(floor(_write_ts/300)*300)에서, 공격 호스트의 originator 창 + 측면 이동·정찰 대상의 responder 창. DNS·Kerberos 서버(192.168.10.3)의 responder 창은 넣지 않는다(모두가 쓰는 기반 서버라 우연히 겹친다)",
+    "status": "confirmed"
+  },
+  "evaluation": {
+    "primary": "합성 에피소드만 분모로 하는 Recall@N. 조사 큐에서 CIC confirmed 에피소드와 겹치는 사건은 뺀다(이미 처리된 공격으로 본다)",
+    "secondary": "CIC 사건을 빼지 않은 큐의 Recall@N",
+    "models": "모델을 다시 학습하지 않는다. 월요일은 그대로라 월요일 train 적합(어휘, 표준화, 모델)이 같다"
+  }
+}

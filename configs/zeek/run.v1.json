@@ -1,0 +1,13 @@
+{
+  "config_id": "zeek-run.v1",
+  "schema_version": 1,
+  "source": "FINAL_PROJECT_DESIGN.md 12.3절, docs/stage-1-progress.md 4~5단계",
+  "image": "zeek/zeek@sha256:73e80e9cd23ff71fd28d158e9a9af5c7b2b0ef5d4036af61521827531347c0e3",
+  "zeek_version": "8.0.10",
+  "zeek_options": ["-C"],
+  "scripts_dir": "configs/zeek",
+  "scripts": ["write-ts.zeek"],
+  "seed_file": "seeds.v1.txt",
+  "nondeterministic_logs": ["packet_filter.log"],
+  "note": "-C(checksum 검사 생략)는 과거 결과 재현을 위해 유지한다. 영향 검증은 따로 한다. Site::local_nets는 설정하지 않는다. 자산 판정은 configs/assets.*를 따른다."
+}

@@ -1,0 +1,39 @@
+# 프로젝트가 직접 쓰는 Python 패키지. 버전을 정확히 고정한다.
+# 의존성까지 포함한 전체 목록은 requirements.lock.txt에 있다.
+# torch는 PyPI 기본 빌드(CUDA 13.2, +cu132)다. CPU용이 아니다.
+# pandas는 2.x로 둔다. PySpark 4.3.0이 pandas 3을 아직 완전히 지원하지 않는다는 경고를 낸다.
+
+# 데이터 처리
+pyspark==4.3.0
+numpy==2.5.4
+pandas==2.3.3
+pyarrow==25.0.1
+
+# 모델·실험 관리
+scikit-learn==1.9.1
+torch==2.15.0
+torch_geometric==2.8.1
+mlflow==3.17.2
+
+# AI 계층(RAG·LangGraph)
+langgraph==1.2.19
+# LangGraph 상태를 PostgreSQL에 저장(checkpoint, interrupt 재개). psycopg-pool이 함께 들어온다
+langgraph-checkpoint-postgres==3.2.1
+psycopg[binary]==3.3.7
+pgvector==0.5.1
+sentence-transformers==6.2.0
+rank-bm25==0.2.2
+# Gemini 임베딩(RAG)과 판단 모델(DD-011). 3.2 이상이어야 decisions API가 있다. tenacity를 9.1.x로 낮춘다
+google-genai==3.2.0
+
+# 서비스(근거 조회 API, 단계 4). httpx는 FastAPI TestClient가 쓴다
+fastapi==0.162.0
+uvicorn==0.54.0
+httpx==0.28.1
+
+# 시각화(EDA)
+matplotlib==3.11.2
+seaborn==0.13.2
+
+# 개발 도구: VS Code에서 노트북을 이 환경으로 실행한다
+ipykernel==7.4.0

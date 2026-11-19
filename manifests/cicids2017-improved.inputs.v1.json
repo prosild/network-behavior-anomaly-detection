@@ -1,0 +1,27 @@
+{
+  "manifest_id": "cicids2017-improved.inputs.v1",
+  "schema_version": 1,
+  "dataset": "CIC-IDS-2017 improved labels (Engelen et al., CNS 2022)",
+  "default_input_root": "CICIDS2017_improved",
+  "source": {
+    "url": "https://intrusion-detection.distrinet-research.be/CNS2022/Datasets/CICIDS2017_improved.zip",
+    "zip_size_listed": "328M",
+    "zip_modified_listed": "2023-04-27 16:41",
+    "zip_sha256": null,
+    "note": "사용자가 압축을 풀어 CSV만 두었다. zip 해시는 기록하지 못했다."
+  },
+  "usage": "단계 1 정답 후보 대조용 참고 라벨. 학습 특징·라벨로 쓰지 않는다.",
+  "sha256_provenance": {
+    "computed_by": "Claude, sha256sum",
+    "computed_on": "2026-11-03",
+    "timezone": "Asia/Seoul"
+  },
+  "observed_structure": "각 파일 91열. 마지막 열은 Label, Attempted Category. Timestamp는 마이크로초 단위로 보인다(monday.csv 첫 행만 확인). 시간대와 Zeek 대응은 미확인.",
+  "files": [
+    {"path": "monday.csv", "size_bytes": 207875155, "sha256": "51fe5dc962626efb4ae70dce0303072fb780da0932822b651202ee9c2fbc1aff"},
+    {"path": "tuesday.csv", "size_bytes": 178397720, "sha256": "e2a0a5b631dfc6b455cc9f9a88b944110637d70a7f74171473925f76f38b6b0c"},
+    {"path": "wednesday.csv", "size_bytes": 291290505, "sha256": "bf46c5f3c792e8817381f724511229569606918eaf07ac986d7a2592b6341bc2"},
+    {"path": "thursday.csv", "size_bytes": 189519159, "sha256": "78a4d11eaf473d099e30e71ddb01e0f38218e844c0a9cdd36602145d674af482"},
+    {"path": "friday.csv", "size_bytes": 285188226, "sha256": "ebd499e6f23bd59f9cb81bec28178491b02b925fa5640a24215c9437d79482d0"}
+  ]
+}

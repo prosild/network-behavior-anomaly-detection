@@ -1,0 +1,8 @@
+{
+  "config_id": "assets.cic-ids-2017.v1",
+  "schema_version": 1,
+  "dataset": "CIC-IDS-2017",
+  "source": "FINAL_PROJECT_DESIGN.md sections 2.1 (C1) and 3.2",
+  "internal_networks": ["192.168.10.0/24"],
+  "scoring_rule": "Only host addresses are scored. The network and broadcast address of each internal network are excluded. The rule is applied per role; connection records are never deleted."
+}

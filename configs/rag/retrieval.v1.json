@@ -1,0 +1,11 @@
+{
+  "config_id": "rag-retrieval.v1",
+  "selected_at": "2026-11-14",
+  "method": "gemini",
+  "model_id": "gemini-embedding-001@768",
+  "query_task_type": "RETRIEVAL_QUERY",
+  "top_k": 5,
+  "fallback": "bm25",
+  "evidence": "outputs/rag/eval/20261114T043204Z-compare/metrics.json",
+  "note": "선택 규칙(hit@5 → MRR → 로컬 우선)으로 고른 방법. 질의 임베딩 호출이 실패하면 로컬 BM25로 대신 찾고 그 사실을 기록한다. 검색 문서는 비신뢰 입력이며 ATT&CK 매핑은 가설이다(설계 9.2절)."
+}

@@ -1,0 +1,10 @@
+{
+  "config_id": "time-windows.v1",
+  "schema_version": 1,
+  "source": "FINAL_PROJECT_DESIGN.md sections 4.2 and 6.1",
+  "assignment_field": "_write_ts",
+  "window_seconds": 300,
+  "window_alignment": "unix_epoch",
+  "split_fraction": 0.8,
+  "note": "Fixed before evaluation. Not tuned for performance."
+}

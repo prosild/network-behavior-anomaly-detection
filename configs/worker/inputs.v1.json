@@ -1,0 +1,42 @@
+{
+  "config_id": "worker-inputs.v1",
+  "note": "추론 worker가 채점할 캡처 묶음. 입력은 이미 만든 Gold v2와 TGN 그래프다(배치 재생). 경로는 프로젝트 루트 기준이다. events_dir·zeek_run_dirs는 근거 요약과 자산 관측(단계 4 5번)이 읽는다. 채점 입력 해시에는 들어가지 않는다.",
+  "sets": {
+    "cic": {
+      "captures": [
+        "cic17-tue",
+        "cic17-wed",
+        "cic17-thu",
+        "cic17-fri"
+      ],
+      "gold_dir": "outputs/gold/conn_features_v2",
+      "graph_dir": "outputs/graphs/tgn_v1",
+      "bounds": "manifests/cic-ids-2017.capture-bounds.v1.json",
+      "events_dir": "outputs/events/tgn_v1",
+      "zeek_run_dirs": {
+        "cic17-tue": "outputs/zeek/tuesday/run-02",
+        "cic17-wed": "outputs/zeek/wednesday/run-02",
+        "cic17-thu": "outputs/zeek/thursday/run-02",
+        "cic17-fri": "outputs/zeek/friday/run-02"
+      }
+    },
+    "synthetic": {
+      "captures": [
+        "syn1-tue",
+        "syn1-wed",
+        "syn1-thu",
+        "syn1-fri"
+      ],
+      "gold_dir": "outputs/synthetic/apt_v1/gold/conn_features_v2",
+      "graph_dir": "outputs/synthetic/apt_v1/graphs/tgn_v1",
+      "bounds": "outputs/synthetic/apt_v1/capture-bounds.json",
+      "events_dir": "outputs/synthetic/apt_v1/events/tgn_v1",
+      "zeek_run_dirs": {
+        "syn1-tue": "outputs/synthetic/apt_v1/zeek/tuesday/run-02",
+        "syn1-wed": "outputs/synthetic/apt_v1/zeek/wednesday/run-02",
+        "syn1-thu": "outputs/synthetic/apt_v1/zeek/thursday/run-02",
+        "syn1-fri": "outputs/synthetic/apt_v1/zeek/friday/run-02"
+      }
+    }
+  }
+}

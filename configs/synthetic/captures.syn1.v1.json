@@ -1,0 +1,13 @@
+{
+  "config_id": "captures.syn1.v1",
+  "schema_version": 1,
+  "dataset": "CIC-IDS-2017 + 합성 APT 주입(DD-008)",
+  "source": "configs/synthetic/apt-injection.v1.json",
+  "note": "합성 캡처의 Zeek 폴더와 용도. 용도는 원래 날(source_capture)과 같다. 캡처 경계는 outputs/synthetic/apt_v1/capture-bounds.json이다. 월요일은 원래 캡처(cic17-mon)를 그대로 쓰므로 여기에 없다.",
+  "captures": [
+    {"capture_id": "syn1-tue", "source_capture": "cic17-tue", "zeek_run_dir": "outputs/synthetic/apt_v1/zeek/tuesday/run-02", "usage": "development"},
+    {"capture_id": "syn1-wed", "source_capture": "cic17-wed", "zeek_run_dir": "outputs/synthetic/apt_v1/zeek/wednesday/run-02", "usage": "retrospective_eval"},
+    {"capture_id": "syn1-thu", "source_capture": "cic17-thu", "zeek_run_dir": "outputs/synthetic/apt_v1/zeek/thursday/run-02", "usage": "retrospective_eval"},
+    {"capture_id": "syn1-fri", "source_capture": "cic17-fri", "zeek_run_dir": "outputs/synthetic/apt_v1/zeek/friday/run-02", "usage": "retrospective_eval"}
+  ]
+}

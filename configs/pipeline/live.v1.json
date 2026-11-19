@@ -1,0 +1,22 @@
+{
+  "config_id": "pipeline-live.v1",
+  "note": "DD-012 파일 단위 자동 파이프라인. enabled가 false면 감시 프로그램은 아무것도 하지 않고 끝난다. 켜는 방법: docs/live-pipeline.md. 경로는 프로젝트 루트 기준이다.",
+  "enabled": false,
+  "inbox": "data/live/inbox",
+  "store": "data/live/store",
+  "file_patterns": [
+    "*.pcap",
+    "*.pcapng"
+  ],
+  "min_age_seconds": 10,
+  "poll_seconds": 30,
+  "capture_id_prefix": "lab",
+  "zeek_config": "configs/zeek/run.v2.json",
+  "zeek_out": "outputs/live/zeek",
+  "runs_out": "outputs/live/runs",
+  "keep_revisions": 2,
+  "assets": "configs/assets.lab.v1.json",
+  "agent": true,
+  "agent_retries": 2,
+  "stale_received_seconds": 600
+}

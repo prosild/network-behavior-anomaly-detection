@@ -1,0 +1,713 @@
+{
+  "font": {
+    "name": "NanumBarunGothic",
+    "path": "/usr/share/fonts/truetype/nanum/NanumBarunGothic.ttf"
+  },
+  "inputs": [
+    {
+      "path": "outputs/eval/_summary/summary-20261106T072759Z.json",
+      "size_bytes": 32027,
+      "sha256": "98a7282079e6da23c3c85b4c9fa623864fb5a94b950ef2e9fa30e6982ce012bb"
+    },
+    {
+      "path": "outputs/eval/20261106T072530Z-tail_rarity_v2/metrics.json",
+      "size_bytes": 29829,
+      "sha256": "1191fdd51f52a55aef5f30e8912fcf9e99d2a8559b501c0331e0ce020abd083a"
+    },
+    {
+      "path": "outputs/eval/20261108T120813Z-synthetic_apt_v1/metrics.json",
+      "size_bytes": 175024,
+      "sha256": "e115348c6307d4f9d5b4295a40772ffcbc8d75d385199020d28e6d83c7c78cbf"
+    },
+    {
+      "path": "outputs/eval/20261110T104214Z-tgn_recon/metrics.json",
+      "size_bytes": 28215,
+      "sha256": "506300b0ccd6099d39bc3d2a4a985d369cafc4b01e15ccbb81499d533c6c68db"
+    },
+    {
+      "path": "outputs/eval/20261110T104214Z-tgn_shift/metrics.json",
+      "size_bytes": 25849,
+      "sha256": "b76b97a920d83916c3a5185299e48d3489c85489a74d86b6888aa89c99279d0d"
+    },
+    {
+      "path": "outputs/eval/20261110T104214Z-tgn_recon/no_nat.json",
+      "size_bytes": 24489,
+      "sha256": "15f36b5275dcb03b998826a93d1ab44875cc71298a9e5460c8e2ea1bf40df5ba"
+    },
+    {
+      "path": "outputs/eval/20261110T104445Z-synthetic_apt_v1/metrics.json",
+      "size_bytes": 53112,
+      "sha256": "e49b2f666ce25957058a705e2e1475d6659fe95e5820797e5860584c8814cfe5"
+    },
+    {
+      "path": "outputs/eval/20261111T014619Z-fusion_v1/metrics.json",
+      "size_bytes": 122130,
+      "sha256": "da3528489754df00381334069ea527b9d52c582ad1d3cf86fd9a6be8d30fb550"
+    },
+    {
+      "path": "outputs/diagnostics/long_connections.json",
+      "size_bytes": 9070,
+      "sha256": "14802c04b8043e475e1ede2a4e74b1394a20cd1f924dd4c954281d97facf422e"
+    }
+  ],
+  "nat_bias_comparison": [
+    {
+      "label": "IF v2",
+      "at_10": {
+        "matched": 4,
+        "episodes": 16,
+        "recall": 0.25,
+        "low": 0.0625,
+        "high": 0.4390624999999986
+      },
+      "at_50": {
+        "matched": 13,
+        "episodes": 16,
+        "recall": 0.8125,
+        "low": 0.625,
+        "high": 1.0
+      }
+    },
+    {
+      "label": "Transformer v2",
+      "at_10": {
+        "matched": 8,
+        "episodes": 16,
+        "recall": 0.5,
+        "low": 0.25,
+        "high": 0.75
+      },
+      "at_50": {
+        "matched": 11,
+        "episodes": 16,
+        "recall": 0.6875,
+        "low": 0.4375,
+        "high": 0.875
+      }
+    },
+    {
+      "label": "꼬리 희귀도 v2",
+      "at_10": {
+        "matched": 8,
+        "episodes": 16,
+        "recall": 0.5,
+        "low": 0.25,
+        "high": 0.75
+      },
+      "at_50": {
+        "matched": 13,
+        "episodes": 16,
+        "recall": 0.8125,
+        "low": 0.625,
+        "high": 1.0
+      }
+    },
+    {
+      "label": "TGN recon (전체)",
+      "at_10": {
+        "matched": 11,
+        "episodes": 16,
+        "recall": 0.6875,
+        "low": 0.4375,
+        "high": 0.9375
+      },
+      "at_50": {
+        "matched": 13,
+        "episodes": 16,
+        "recall": 0.8125,
+        "low": 0.625,
+        "high": 1.0
+      }
+    },
+    {
+      "label": "TGN recon (NAT 제외)",
+      "at_10": {
+        "matched": 6,
+        "episodes": 16,
+        "recall": 0.375,
+        "low": 0.125,
+        "high": 0.625
+      },
+      "at_50": {
+        "matched": 10,
+        "episodes": 16,
+        "recall": 0.625,
+        "low": 0.375,
+        "high": 0.875
+      }
+    },
+    {
+      "label": "NAT 유무 (진단용)",
+      "at_10": {
+        "matched": 9,
+        "episodes": 16,
+        "recall": 0.5625,
+        "low": 0.3125,
+        "high": 0.8125
+      },
+      "at_50": {
+        "matched": 13,
+        "episodes": 16,
+        "recall": 0.8125,
+        "low": 0.625,
+        "high": 1.0
+      }
+    },
+    {
+      "label": "NAT 연결 수 (진단용)",
+      "at_10": {
+        "matched": 12,
+        "episodes": 16,
+        "recall": 0.75,
+        "low": 0.5625,
+        "high": 0.9375
+      },
+      "at_50": {
+        "matched": 13,
+        "episodes": 16,
+        "recall": 0.8125,
+        "low": 0.625,
+        "high": 1.0
+      }
+    }
+  ],
+  "tail_rarity_v2_tie_sensitivity_at_10": {
+    "cic17-tue": {
+      "fixed_recall_10": 1.0,
+      "tie_size_at_10": 21,
+      "mean": 0.9065,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "cic17-wed": {
+      "fixed_recall_10": 0.4,
+      "tie_size_at_10": 21,
+      "mean": 0.3934,
+      "min": 0.0,
+      "max": 0.8
+    },
+    "cic17-thu": {
+      "fixed_recall_10": 0.3333333333333333,
+      "tie_size_at_10": 54,
+      "mean": 0.22966666666666666,
+      "min": 0.16666666666666666,
+      "max": 0.5
+    },
+    "cic17-fri": {
+      "fixed_recall_10": 0.6666666666666666,
+      "tie_size_at_10": 28,
+      "mean": 0.696,
+      "min": 0.3333333333333333,
+      "max": 1.0
+    }
+  },
+  "long_connections_holdout": {
+    "iforest_v2": {
+      "holdout_windows": 312,
+      "long_dominated_share_all": 0.0256,
+      "top10_long_dominated_share": 0.0,
+      "top20_long_dominated_share": 0.0
+    },
+    "tail_rarity_v2": {
+      "holdout_windows": 312,
+      "long_dominated_share_all": 0.0256,
+      "top10_long_dominated_share": 0.1,
+      "top20_long_dominated_share": 0.05
+    },
+    "transformer_v2": {
+      "holdout_windows": 312,
+      "long_dominated_share_all": 0.0256,
+      "top10_long_dominated_share": 0.0,
+      "top20_long_dominated_share": 0.05
+    }
+  },
+  "cic_model_comparison": [
+    {
+      "model": "꼬리 희귀도 v1",
+      "at_10": {
+        "matched": 8,
+        "episodes": 16,
+        "recall": 0.5,
+        "low": 0.25,
+        "high": 0.75
+      },
+      "at_50": {
+        "matched": 9,
+        "episodes": 16,
+        "recall": 0.5625,
+        "low": 0.3125,
+        "high": 0.8125
+      }
+    },
+    {
+      "model": "꼬리 희귀도 v2",
+      "at_10": {
+        "matched": 8,
+        "episodes": 16,
+        "recall": 0.5,
+        "low": 0.25,
+        "high": 0.75
+      },
+      "at_50": {
+        "matched": 13,
+        "episodes": 16,
+        "recall": 0.8125,
+        "low": 0.625,
+        "high": 1.0
+      }
+    },
+    {
+      "model": "Isolation Forest v1",
+      "at_10": {
+        "matched": 0,
+        "episodes": 16,
+        "recall": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "at_50": {
+        "matched": 10,
+        "episodes": 16,
+        "recall": 0.625,
+        "low": 0.375,
+        "high": 0.875
+      }
+    },
+    {
+      "model": "IF v2 [제외]",
+      "at_10": {
+        "matched": 4,
+        "episodes": 16,
+        "recall": 0.25,
+        "low": 0.0625,
+        "high": 0.4390624999999986
+      },
+      "at_50": {
+        "matched": 13,
+        "episodes": 16,
+        "recall": 0.8125,
+        "low": 0.625,
+        "high": 1.0
+      }
+    },
+    {
+      "model": "Transformer v1",
+      "at_10": {
+        "matched": 8,
+        "episodes": 16,
+        "recall": 0.5,
+        "low": 0.25,
+        "high": 0.75
+      },
+      "at_50": {
+        "matched": 9,
+        "episodes": 16,
+        "recall": 0.5625,
+        "low": 0.3125,
+        "high": 0.8125
+      }
+    },
+    {
+      "model": "Transformer v2",
+      "at_10": {
+        "matched": 8,
+        "episodes": 16,
+        "recall": 0.5,
+        "low": 0.25,
+        "high": 0.75
+      },
+      "at_50": {
+        "matched": 11,
+        "episodes": 16,
+        "recall": 0.6875,
+        "low": 0.4375,
+        "high": 0.875
+      }
+    },
+    {
+      "model": "TGN recon",
+      "at_10": {
+        "matched": 11,
+        "episodes": 16,
+        "recall": 0.6875,
+        "low": 0.4375,
+        "high": 0.9375
+      },
+      "at_50": {
+        "matched": 13,
+        "episodes": 16,
+        "recall": 0.8125,
+        "low": 0.625,
+        "high": 1.0
+      }
+    },
+    {
+      "model": "TGN shift [보조]",
+      "at_10": {
+        "matched": 8,
+        "episodes": 16,
+        "recall": 0.5,
+        "low": 0.25,
+        "high": 0.75
+      },
+      "at_50": {
+        "matched": 10,
+        "episodes": 16,
+        "recall": 0.625,
+        "low": 0.375,
+        "high": 0.875
+      }
+    },
+    {
+      "model": "결합 v1 (최종)",
+      "at_10": {
+        "matched": 8,
+        "episodes": 16,
+        "recall": 0.5,
+        "low": 0.25,
+        "high": 0.75
+      },
+      "at_50": {
+        "matched": 14,
+        "episodes": 16,
+        "recall": 0.875,
+        "low": 0.6875,
+        "high": 1.0
+      }
+    }
+  ],
+  "synthetic_model_comparison": [
+    {
+      "model": "꼬리 희귀도 v1",
+      "at_10": {
+        "matched": 4,
+        "episodes": 20,
+        "recall": 0.2,
+        "low": 0.05,
+        "high": 0.4
+      },
+      "at_50": {
+        "matched": 9,
+        "episodes": 20,
+        "recall": 0.45,
+        "low": 0.25,
+        "high": 0.65
+      }
+    },
+    {
+      "model": "꼬리 희귀도 v2",
+      "at_10": {
+        "matched": 7,
+        "episodes": 20,
+        "recall": 0.35,
+        "low": 0.15,
+        "high": 0.55
+      },
+      "at_50": {
+        "matched": 11,
+        "episodes": 20,
+        "recall": 0.55,
+        "low": 0.35,
+        "high": 0.75
+      }
+    },
+    {
+      "model": "Isolation Forest v1",
+      "at_10": {
+        "matched": 4,
+        "episodes": 20,
+        "recall": 0.2,
+        "low": 0.05,
+        "high": 0.4
+      },
+      "at_50": {
+        "matched": 4,
+        "episodes": 20,
+        "recall": 0.2,
+        "low": 0.05,
+        "high": 0.4
+      }
+    },
+    {
+      "model": "IF v2 [제외]",
+      "at_10": {
+        "matched": 2,
+        "episodes": 20,
+        "recall": 0.1,
+        "low": 0.0,
+        "high": 0.25
+      },
+      "at_50": {
+        "matched": 6,
+        "episodes": 20,
+        "recall": 0.3,
+        "low": 0.1,
+        "high": 0.5
+      }
+    },
+    {
+      "model": "Transformer v1",
+      "at_10": {
+        "matched": 4,
+        "episodes": 20,
+        "recall": 0.2,
+        "low": 0.05,
+        "high": 0.4
+      },
+      "at_50": {
+        "matched": 9,
+        "episodes": 20,
+        "recall": 0.45,
+        "low": 0.25,
+        "high": 0.65
+      }
+    },
+    {
+      "model": "Transformer v2",
+      "at_10": {
+        "matched": 4,
+        "episodes": 20,
+        "recall": 0.2,
+        "low": 0.05,
+        "high": 0.4
+      },
+      "at_50": {
+        "matched": 11,
+        "episodes": 20,
+        "recall": 0.55,
+        "low": 0.3,
+        "high": 0.75
+      }
+    },
+    {
+      "model": "TGN recon",
+      "at_10": {
+        "matched": 2,
+        "episodes": 20,
+        "recall": 0.1,
+        "low": 0.0,
+        "high": 0.25
+      },
+      "at_50": {
+        "matched": 9,
+        "episodes": 20,
+        "recall": 0.45,
+        "low": 0.25,
+        "high": 0.65
+      }
+    },
+    {
+      "model": "TGN shift [보조]",
+      "at_10": {
+        "matched": 2,
+        "episodes": 20,
+        "recall": 0.1,
+        "low": 0.0,
+        "high": 0.25
+      },
+      "at_50": {
+        "matched": 7,
+        "episodes": 20,
+        "recall": 0.35,
+        "low": 0.15,
+        "high": 0.55
+      }
+    },
+    {
+      "model": "결합 v1 (최종)",
+      "at_10": {
+        "matched": 5,
+        "episodes": 20,
+        "recall": 0.25,
+        "low": 0.09875000000000114,
+        "high": 0.45
+      },
+      "at_50": {
+        "matched": 13,
+        "episodes": 20,
+        "recall": 0.65,
+        "low": 0.45,
+        "high": 0.85
+      }
+    }
+  ],
+  "synthetic_pattern_best_ranks": {
+    "internal_scan": {
+      "IF v2 (결합 제외)": [
+        15,
+        6,
+        9,
+        18
+      ],
+      "꼬리 희귀도 v2": [
+        3,
+        1,
+        3,
+        2
+      ],
+      "Transformer v2": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "TGN recon": [
+        null,
+        113,
+        6,
+        null
+      ],
+      "결합 v1 (최종 선정)": [
+        3,
+        2,
+        3,
+        3
+      ]
+    },
+    "lateral_smb": {
+      "IF v2 (결합 제외)": [
+        11,
+        67,
+        56,
+        52
+      ],
+      "꼬리 희귀도 v2": [
+        null,
+        null,
+        39,
+        null
+      ],
+      "Transformer v2": [
+        19,
+        21,
+        28,
+        18
+      ],
+      "TGN recon": [
+        48,
+        11,
+        null,
+        34
+      ],
+      "결합 v1 (최종 선정)": [
+        43,
+        28,
+        65,
+        41
+      ]
+    },
+    "slow_exfil": {
+      "IF v2 (결합 제외)": [
+        null,
+        null,
+        63,
+        null
+      ],
+      "꼬리 희귀도 v2": [
+        30,
+        7,
+        4,
+        24
+      ],
+      "Transformer v2": [
+        null,
+        112,
+        107,
+        null
+      ],
+      "TGN recon": [
+        null,
+        null,
+        44,
+        null
+      ],
+      "결합 v1 (최종 선정)": [
+        68,
+        20,
+        11,
+        54
+      ]
+    },
+    "dns_tunnel": {
+      "IF v2 (결합 제외)": [
+        62,
+        null,
+        null,
+        null
+      ],
+      "꼬리 희귀도 v2": [
+        1,
+        117,
+        null,
+        13
+      ],
+      "Transformer v2": [
+        133,
+        null,
+        85,
+        null
+      ],
+      "TGN recon": [
+        14,
+        null,
+        null,
+        null
+      ],
+      "결합 v1 (최종 선정)": [
+        2,
+        257,
+        184,
+        32
+      ]
+    },
+    "beacon_https": {
+      "IF v2 (결합 제외)": [
+        73,
+        null,
+        47,
+        79
+      ],
+      "꼬리 희귀도 v2": [
+        null,
+        118,
+        105,
+        null
+      ],
+      "Transformer v2": [
+        60,
+        49,
+        43,
+        49
+      ],
+      "TGN recon": [
+        61,
+        33,
+        15,
+        5
+      ],
+      "결합 v1 (최종 선정)": [
+        139,
+        81,
+        35,
+        12
+      ]
+    }
+  },
+  "outputs": [
+    {
+      "path": "outputs/eda/04_bias_and_tie_diagnostics.png",
+      "size_bytes": 347733,
+      "sha256": "c3463960e74434738b0545d8b11c1cc2a7490410ca3f661e78ce97f19110c1c2"
+    },
+    {
+      "path": "outputs/eda/05_model_recall_comparison.png",
+      "size_bytes": 329129,
+      "sha256": "e3262ac6a9ea121a08586557f8ef25fa97b02e1a121be08c71ca94d12874f03f"
+    },
+    {
+      "path": "outputs/eda/06_synthetic_pattern_heatmap.png",
+      "size_bytes": 324034,
+      "sha256": "dab98d778ffebd4c2e18d51d9c5f9870c86f2312346d5a2ad9d84d19ae707315"
+    }
+  ]
+}

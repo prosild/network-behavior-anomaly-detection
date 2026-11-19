@@ -1,0 +1,46 @@
+{
+  "config_id": "first-seen.v1",
+  "schema_version": 1,
+  "decision": "docs/design-decisions/DD-006-behavior-detectors-reduced.md",
+  "detector": "first_seen",
+  "description": "창(자산, 역할, 5분)에서 처음 등장한 관계 항목의 가중 합. 규칙은 zeek_ad/first_seen.py.",
+  "items": {
+    "external": "(방향 out/in, 자산, 외부 대역 IPv4 /24, IPv6 /64)",
+    "internal": "(출발 자산, 도착 자산, 프로토콜:포트군). 포트군은 받는 쪽 포트 기준"
+  },
+  "weights": {
+    "external_block": 1.0,
+    "internal_pair": 3.0,
+    "internal_remote_admin": 10.0
+  },
+  "remote_admin_groups": [
+    "tcp:ssh",
+    "tcp:rpc",
+    "tcp:smb",
+    "tcp:rdp",
+    "tcp:winrm"
+  ],
+  "seen_init": "cic17-mon split == train 창의 모든 항목",
+  "holdout_scoring": "월요일 holdout·경계·양끝 창은 train seen-set으로 고정 채점(갱신 없음)",
+  "update": {
+    "rule": "경보(점수 >= 임계값)가 없던 창에서 처음 본 항목만 지연 후 편입",
+    "delay_windows": 12,
+    "carry_over_days": [
+      "cic17-tue",
+      "cic17-wed",
+      "cic17-thu",
+      "cic17-fri"
+    ]
+  },
+  "exclude_peer_networks": [],
+  "score_column": "first_seen_score",
+  "missing_window_score": 0,
+  "threshold_rule": {
+    "type": "holdout_percentile",
+    "percentile": 95,
+    "minimum": 1
+  },
+  "deployable": true,
+  "fixed_before_eval": "2026-11-06",
+  "scores_dir": "outputs/diagnostics/first_seen_v1"
+}

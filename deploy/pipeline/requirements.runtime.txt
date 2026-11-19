@@ -1,0 +1,19 @@
+# 배포 파이프라인 이미지(deploy/pipeline/Dockerfile)가 설치하는 패키지. 버전은 requirements.txt와 같다.
+# 빼는 것: EDA(matplotlib·seaborn), 노트북(ipykernel), bge 비교(sentence-transformers, rag.py가 bge일 때만 불러온다).
+# torch는 Dockerfile에서 CPU 빌드로 따로 설치한다(배포 VM에는 GPU가 없다, DD-015).
+pyspark==4.3.0
+numpy==2.5.4
+pandas==2.3.3
+pyarrow==25.0.1
+scikit-learn==1.9.1
+torch_geometric==2.8.1
+mlflow==3.17.2
+langgraph==1.2.19
+langgraph-checkpoint-postgres==3.2.1
+psycopg[binary]==3.3.7
+pgvector==0.5.1
+rank-bm25==0.2.2
+google-genai==3.2.0
+fastapi==0.162.0
+uvicorn==0.54.0
+httpx==0.28.1

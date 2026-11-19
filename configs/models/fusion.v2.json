@@ -1,0 +1,32 @@
+{
+  "config_id": "fusion.v2",
+  "schema_version": 1,
+  "decision": "docs/design-decisions/DD-018-fusion-merge-overlaps.md",
+  "based_on": "fusion.v1",
+  "created_at": "2026-11-19",
+  "note": "사용자 결정(2026-11-19, Q59). v1과 모델·순서·후보 규칙은 같고 겹친 사건 처리만 다르다. 실습망 실행 1·2에서 사건 범위가 큐 구성에 따라 바뀌고 사건 ID가 달라져 다시 알림이 간 것을 보고 정했다. CIC 결합 평가 결과(v1)는 바꾸지 않는다.",
+  "models": [
+    {
+      "name": "tgn_recon",
+      "cic_run": "20261110T104214Z-tgn_recon",
+      "synthetic_scores": "20261110T104445Z-synthetic_apt_v1/scores_tgn_recon.parquet"
+    },
+    {
+      "name": "tail_rarity_v2",
+      "cic_run": "20261106T072530Z-tail_rarity_v2",
+      "synthetic_scores": "20261108T120813Z-synthetic_apt_v1/scores_tail_rarity_v2.parquet"
+    },
+    {
+      "name": "transformer_v2",
+      "cic_run": "20261106T072745Z-transformer_v2",
+      "synthetic_scores": "20261108T120813Z-synthetic_apt_v1/scores_transformer_v2.parquet"
+    }
+  ],
+  "order_rule": "위 목록 순서로 돈다. 1회차에 각 모델의 1위, 2회차에 2위, ... 한 모델의 큐가 끝나면 남은 모델로 계속한다",
+  "candidates": "모델마다 기존 규약 그대로: 월요일 보류 p95 이상인 창, 캡처 양끝 창 제외, 사건 묶기(연속 5분, 30분 상한), 사건 점수 내림차순 + 고정 해시 동점 순서",
+  "overlap_policy": "merge_windows",
+  "duplicate_rule": "뽑을 사건이 이미 뽑힌 사건과 같은 캡처·자산·역할에서 창을 하나라도 공유하면 하나로 합친다. 여러 사건과 겹치면 그 사건들도 합치고, 순위는 그중 가장 먼저 뽑힌 자리다. 그 모델의 이번 차례는 쓴 것으로 친다. 합친 사건의 창은 묶인 모든 모델 사건 창의 합이고, 사건 ID·첫 창·끝은 합친 창으로 다시 만든다. 모델별 30분 상한은 모델 사건에만 적용한다(합친 사건은 넘을 수 있다).",
+  "model_score": "처음 뽑은 모델의 사건 중 합친 범위 안에 든 것의 점수 최댓값",
+  "synthetic_main_queue": "합성 평가의 주 큐는 모델별 큐에서 CIC confirmed 사건과 겹치는 사건을 먼저 뺀 뒤 합친다(DD-008)",
+  "score": "합친 큐에는 비교할 점수가 없다. 순서 자체가 순위다"
+}

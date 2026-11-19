@@ -1,0 +1,12 @@
+{
+  "config_id": "rag-retrieval.v2",
+  "selected_at": "2026-11-17",
+  "method": "gemini",
+  "model_id": "gemini-embedding-001@768",
+  "query_task_type": "RETRIEVAL_QUERY",
+  "top_k": 10,
+  "fallback": "bm25",
+  "evidence": "outputs/rag/eval/20261114T043204Z-compare/metrics.json",
+  "note": "선택 규칙(hit@5 → MRR → 로컬 우선)으로 고른 방법. 질의 임베딩 호출이 실패하면 로컬 BM25로 대신 찾고 그 사실을 기록한다. 검색 문서는 비신뢰 입력이며 ATT&CK 매핑은 가설이다(설계 9.2절). v2(2026-11-17, 사용자 승인): top_k 5 → 10. 포트 스캔 사건에서 T1046(Network Service Discovery)이 6~10위에 있어 후보에서 빠졌다(실습망 스캐너 8위, CIC eval-13 누락, 보고서 60건 중 2건만 포함). 같은 평가(질의 16개)에서 hit@5 15/16, hit@10 16/16.",
+  "previous": "configs/rag/retrieval.v1.json"
+}

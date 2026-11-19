@@ -1,0 +1,141 @@
+# zeek_AD 운영 구성.
+# - 이 PC(개발): PostgreSQL 하나만 띄운다. docker compose -f deploy/compose.yaml --env-file deploy/.env up -d
+# - 배포 VM(DD-015): app 프로필로 나머지까지 띄운다. 빌드는 프로젝트 루트가 기준이다.
+#     docker compose -f deploy/compose.yaml --env-file deploy/.env --profile app build
+#     docker compose -f deploy/compose.yaml --env-file deploy/.env --profile app up -d
+# 노출 원칙: 실습망(host-only) 카드에는 어떤 포트도 열지 않는다. Docker의 포트 공개는 방화벽(ufw)보다 앞서므로
+#   주소를 반드시 적는다. DB·API는 127.0.0.1, 화면(MLflow, 이후 대시보드)은 관리용(NAT) 주소 MGMT_BIND에만 연다.
+# 비밀값: 서비스마다 필요한 것만 넘긴다(env_file로 .env 전체를 넘기지 않는다).
+name: zeekad
+
+services:
+  postgres:
+    # pgvector 확장이 들어 있는 PostgreSQL 17. 단계 5a(RAG)에서 같은 서버를 쓴다.
+    image: pgvector/pgvector:0.8.1-pg17
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?deploy/.env 필요}
+      # 초기화 스크립트(init/)가 읽는 역할별 비밀번호.
+      ZEEKAD_OWNER_PASSWORD: ${ZEEKAD_OWNER_PASSWORD:?}
+      ZEEKAD_WORKER_PASSWORD: ${ZEEKAD_WORKER_PASSWORD:?}
+      ZEEKAD_API_PASSWORD: ${ZEEKAD_API_PASSWORD:?}
+      DASHBOARD_RO_PASSWORD: ${DASHBOARD_RO_PASSWORD:?}
+      DASHBOARD_RW_PASSWORD: ${DASHBOARD_RW_PASSWORD:?}
+      MLFLOW_DB_PASSWORD: ${MLFLOW_DB_PASSWORD:?}
+      # Java 대시보드 자체 DB(zeekad_dashboard)의 소유 계정
+      DASHBOARD_APP_PASSWORD: ${DASHBOARD_APP_PASSWORD:?}
+    ports:
+      # 이 PC 안에서만 접속한다(127.0.0.1). 외부 인터페이스에 열지 않는다.
+      - "127.0.0.1:${POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # 데이터 폴더가 비어 있을 때(처음 한 번)만 실행된다.
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d zeekad"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # 감시 프로그램: 수신 폴더 → Zeek → 그날 다시 계산 → 채점 → 근거 → LangGraph 에이전트(템플릿 알림 먼저).
+  pipeline:
+    profiles: [app]
+    build:
+      context: ..
+      dockerfile: deploy/pipeline/Dockerfile
+    image: zeekad-pipeline:${ZEEKAD_IMAGE_TAG:-dev}
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      ZEEKAD_WORKER_PASSWORD: ${ZEEKAD_WORKER_PASSWORD:?}
+      MLFLOW_DB_PASSWORD: ${MLFLOW_DB_PASSWORD:?}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      # app 프로필로 띄우는 것이 곧 켜겠다는 뜻이다. 설정 파일의 enabled(이 PC의 기본값 false)를 덮는다.
+      ZEEKAD_LIVE_ENABLED: "1"
+    # 일반 계정(uid 1000)으로 돌고 특별한 권한이 필요 없다. 모든 capability를 빼고 권한 상승(setuid 등)을 막는다.
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      # ZEEKAD_ROOT: 프로젝트 폴더(기본: 이 파일의 상위 폴더). outputs에 모델·월요일 이벤트·리비전이, data/live에 PCAP이 있다.
+      - ${ZEEKAD_ROOT:-..}/outputs:/app/outputs
+      - ${ZEEKAD_ROOT:-..}/data/live:/app/data/live
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 실습망 수집: host-only 카드(LAB_IFACE)만 캡처해 ROTATE_SECONDS마다 data/live/inbox로 넘긴다(scripts/capture_lab.sh).
+  collector:
+    profiles: [app]
+    image: zeekad-pipeline:${ZEEKAD_IMAGE_TAG:-dev}
+    command: ["sh", "/app/scripts/capture_lab.sh"]
+    # VM의 실제 카드를 보려면 호스트 네트워크를 쓴다. 이 컨테이너는 포트를 열지 않는다.
+    network_mode: host
+    # root로 시작해 곧바로 uid 1000이 된다. 권한은 캡처(NET_RAW)와 계정 바꾸기(SETUID·SETGID)만 남긴다.
+    user: root
+    cap_drop: [ALL]
+    cap_add: [NET_RAW, SETUID, SETGID]
+    environment:
+      LAB_IFACE: ${LAB_IFACE:-}
+      ROTATE_SECONDS: ${ROTATE_SECONDS:-300}
+    volumes:
+      - ${ZEEKAD_ROOT:-..}/data/live:/app/data/live
+    restart: unless-stopped
+
+  # 근거 조회 API(읽기 전용 계정). 대시보드는 컨테이너 네트워크 안에서 http://api:8000 으로 부른다.
+  api:
+    profiles: [app]
+    image: zeekad-pipeline:${ZEEKAD_IMAGE_TAG:-dev}
+    command: ["python", "scripts/run_api.py", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      ZEEKAD_API_PASSWORD: ${ZEEKAD_API_PASSWORD:?}
+    # 일반 계정(uid 1000)으로 돌고 특별한 권한이 필요 없다. 모든 capability를 빼고 권한 상승(setuid 등)을 막는다.
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # MLflow 화면. 실험·모델 버전·LangGraph trace를 본다. artifact(모델 파일)는 읽기만 한다.
+  mlflow:
+    profiles: [app]
+    image: zeekad-pipeline:${ZEEKAD_IMAGE_TAG:-dev}
+    command: ["python", "scripts/mlflow_ui.py", "--host", "0.0.0.0", "--port", "5000", "--workers", "1",
+              "--cors-allowed-origins", "http://${MGMT_BIND:-127.0.0.1}:${MLFLOW_UI_PORT:-5000}"]
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      MLFLOW_DB_PASSWORD: ${MLFLOW_DB_PASSWORD:?}
+    # 일반 계정(uid 1000)으로 돌고 특별한 권한이 필요 없다. 모든 capability를 빼고 권한 상승(setuid 등)을 막는다.
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - ${ZEEKAD_ROOT:-..}/outputs/mlflow:/app/outputs/mlflow:ro
+    ports:
+      - "${MGMT_BIND:-127.0.0.1}:${MLFLOW_UI_PORT:-5000}:5000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Java 관리자 대시보드(Nginx·WAF 포함)는 대시보드 프로젝트의 이미지가 나오면 여기에 더한다.
+  # 접속: dashboard_ro·dashboard_rw(zeekad DB 뷰·상태 변경 함수), dashboard_app(zeekad_dashboard DB), 근거 API http://api:8000.
+  # 화면 포트는 "${MGMT_BIND}:<포트>:<포트>"로 관리용 주소에만 연다.
+
+volumes:
+  pgdata:
