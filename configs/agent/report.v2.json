@@ -1,0 +1,10 @@
+{
+  "config_id": "agent-report.v2",
+  "note": "운영 LangGraph(scripts/run_agent_graph.py)가 쓰는 LLM 보고서 설정(2026-11-21, Q64). v1(평가 동결, 요청 gemini-3.7-flash)과 요청 모델만 다르다. v1로 요청해도 응답 model_version은 처음부터 모두 gemini-3.8-flash였으므로, 요청 값을 실제와 맞춘다. 3.8-flash는 공식 목록에서 버전 칸이 '3.0'이라 날짜 고정 버전이 없다(2026-11-21 확인). 그래서 호출마다 응답 model_version을 기록하는 규칙은 그대로다. 평가 재현 도구(scripts/run_agent_reports.py)는 v1을 그대로 쓴다.",
+  "model": "gemini-3.8-flash",
+  "api_version": "v1beta",
+  "temperature": 0,
+  "timeout_seconds": 90,
+  "retries": 1,
+  "system_prompt": "configs/agent/prompts/report-system.v2.txt"
+}

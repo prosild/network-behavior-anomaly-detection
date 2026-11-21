@@ -43,7 +43,8 @@ def resources(ctx_options=None):
     from zeek_ad.db import connect, load_env
 
     key = load_env()["GEMINI_API_KEY"]
-    report_cfg = json.loads((CONFIGS / "report.v1.json").read_text(encoding="utf-8"))
+    # v2: 요청 모델을 실제 응답 모델(gemini-3.8-flash)과 맞춘 운영 설정(Q64). 평가 동결 v1은 run_agent_reports.py가 그대로 쓴다
+    report_cfg = json.loads((CONFIGS / "report.v2.json").read_text(encoding="utf-8"))
     send_cfg = json.loads((CONFIGS / "send-decision.v1.json").read_text(encoding="utf-8"))
     dm = send_cfg["decision_model"]
     return {

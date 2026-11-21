@@ -34,7 +34,7 @@ incident_queue (v1) ── 사건 하나 = (job_id, incident_id)
 | `zeekad_verification_passed` | boolean | LLM 보고서 검증 결과. `false`면 kind가 `template`이다 |
 | `zeekad_verification_reason` | text | 실패 이유: `verification`(숫자·가명·ATT&CK ID가 사실과 안 맞음), `call`(호출 실패) 등. 통과면 null |
 | `zeekad_verification_problems` | jsonb | 걸린 항목 목록, 예: `[{"kind": "number_not_in_facts", "value": "2", "where": "possible_explanations[2]"}]` |
-| `llm_model_requested`, `llm_model_version` | text | 요청한 모델과 실제 응답한 모델 버전(다를 수 있다. 예: 요청 `gemini-3.7-flash`, 응답 `gemini-3.8-flash`) |
+| `llm_model_requested`, `llm_model_version` | text | 요청한 모델과 실제 응답한 모델 버전(다를 수 있다. 예: 2026-11-20까지 요청 `gemini-3.7-flash`, 응답 `gemini-3.8-flash`. 2026-11-21부터 운영 요청도 `gemini-3.8-flash`, Q64) |
 | `llm_seconds` | double | LLM 호출 시간(초) |
 | `llm_input_tokens`, `llm_output_tokens`, `llm_thinking_tokens` | integer | 토큰 수. 호출 실패면 null |
 | `llm_error` | text | 호출 오류 종류. 없으면 null |

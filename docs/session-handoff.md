@@ -12,6 +12,7 @@
   - 결합 v2([DD-018](design-decisions/DD-018-fusion-merge-overlaps.md)), 분석가 검토 결정 경로([DD-019](design-decisions/DD-019-review-decision-path.md), DB 함수 + 파이프라인 재개), 같은 자산 알림 묶음(DD-010 결정 5, Slack 스레드), 분석가 결론 집계 뷰(migration 017).
   - 단계 7: 묶음 버전 2(v1 규칙)·3(v2 규칙) 등록, 교체 → 롤백 → 재교체를 실제 추론으로 확인. **배포 VM champion = 버전 3**([단계 7](stage-7-progress.md)).
   - 포트폴리오: README, 한 장 요약, 문서·스크립트 색인, 공개 저장소 https://github.com/prosild/zeek_AD 첫 커밋. 시험 178개.
+- **2026-11-21에 한 것**: 대시보드 모델 표시 이름 확정(기준선 이탈·행위 패턴 이탈·통신 관계 이상, 데이터 계약, Q63, 대시보드 반영은 그쪽 세션), 운영 LLM 요청 모델 gemini-3.8-flash(`report.v2.json`, Q64, 배포 VM 반영), 데이터 출처 인용(README 출처 절). 시험 181개.
 - **Java 대시보드 쪽(그쪽 AI 보고를 사용자가 전달, 2026-11-18)**: T01~T05 완료. 데이터 계약 v2.1과 VMware 단일 Compose를 반영했다. Compose에 붙일 때 근거 API는 `http://api:8000`, DB는 `postgres:5432`. TLS 인증서는 배포 VM NAT 주소(SAN). 이 폴더와 대시보드 폴더는 파일을 주고받지 않는다(방법은 미정).
 - 끝난 단계: 단계 3(기준선·IF·Transformer·TGN·합성 APT·결합 DD-009), 단계 4(DB·MLflow 등록·worker·근거 API·대시보드 뷰), 단계 5(5a RAG, 5b LLM 보고서·판단 모델·Slack dry-run·LangGraph), 단계 6(파일 단위 파이프라인 DD-012, VMware 배포 DD-015, 실습망 시험), 단계 7(모델 교체·롤백).
 - 사용자 실습: 노트북 01~04 완료(2026-11-10), LangGraph 실습 05(실습 노트북, 저장소에 없음)(2026-11-18).
