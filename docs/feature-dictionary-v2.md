@@ -1,6 +1,6 @@
 # Gold 특징 사전 v2 (`conn-features.v2`)
 
-v1 18개 특징([feature-dictionary-v1.md](feature-dictionary-v1.md))에 Zeek 프로토콜 로그 특징 24개를 더한 42개다. [DD-006](design-decisions/DD-006-behavior-detectors-reduced.md) 수정 절 1번이다. 화~금 결과를 본 뒤 추가했다(결과 노출 이후의 변경).
+v1 18개 특징([feature-dictionary-v1.md](feature-dictionary-v1.md))에 Zeek 프로토콜 로그 특징 24개를 더한 42개다. [DD-006](design-decisions/DD-006-behavior-detectors-reduced.md) 수정 절 1번이다. 화\~금 결과를 본 뒤 추가했다(결과 노출 이후의 변경).
 
 ## 만드는 법
 

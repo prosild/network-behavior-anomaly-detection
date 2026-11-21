@@ -13,7 +13,7 @@
   - 필드 목록은 5일 로그 전체에서 실제로 나온 키로 정했다. Claude가 조사했다.
   - 5개 필드는 행에 따라 없다: `duration`, `orig_bytes`, `resp_bytes`, `history`, `service`.
 - **시각 타입:** double로 읽는다.
-  - Zeek JSON의 시각은 double의 최단 표현으로 찍힌다. 그래서 소수 자릿수가 1~7자리로 다르다. 예: `1499083322.5595331`.
+  - Zeek JSON의 시각은 double의 최단 표현으로 찍힌다. 그래서 소수 자릿수가 1\~7자리로 다르다. 예: `1499083322.5595331`.
   - Decimal(16,6)로 읽으면 7자리 값이 바뀐다(월요일 `ts` 430개, `_write_ts` 410개).
 - **바이트·패킷 타입:** long. 긴 연결에서 int 범위를 넘을 수 있다.
 - [scripts/inspect_conn.py](../scripts/inspect_conn.py): 읽기 전용 확인 스크립트.
@@ -72,7 +72,7 @@ Silver 저장을 실행하기 전에, 사용자가 Zeek·Docker·PySpark·Parque
   - 점이 든 이름을 바꾸고(`id.orig_h`→`orig_h`, `_write_ts`→`write_ts`), `eof_candidate`를 표시한다.
 - [scripts/build_silver_conn.py](../scripts/build_silver_conn.py): `conn_v1/conn/capture_id=<ID>/`와 `conn_v1/quarantine/capture_id=<ID>/`에 쓴다. 이미 있으면 덮어쓰지 않는다.
 
-월요일 첫 실행(사용자, 2026-11-04): Silver 375,432행, 격리 0, `eof_candidate` 292, 행 번호 1~375,432가 모두 다름. `processing_run_id=62bc2db42bafb271`, 21MB. 점이 든 열 이름이 없는 것을 확인했다.
+월요일 첫 실행(사용자, 2026-11-04): Silver 375,432행, 격리 0, `eof_candidate` 292, 행 번호 1\~375,432가 모두 다름. `processing_run_id=62bc2db42bafb271`, 21MB. 점이 든 열 이름이 없는 것을 확인했다.
 
 ### Silver manifest 추가
 
@@ -122,7 +122,7 @@ Gold의 `capture_edge`와 월요일 80% 분할에는 캡처의 패킷 시각 최
 ## 네 번째 작업: 역할 관측과 창 라벨
 
 - 설정: [captures 설정](../configs/captures.cic-ids-2017.v1.json)에 용도(`usage`)를 추가했다.
-  - 월 `train_holdout`, 화 `development`, 수~금 `retrospective_eval`. 근거는 설계 6.1절이다.
+  - 월 `train_holdout`, 화 `development`, 수\~금 `retrospective_eval`. 근거는 설계 6.1절이다.
 - [zeek_ad/windows.py](../zeek_ad/windows.py): 두 함수를 추가했다. 테스트 2개를 더해 모두 22개가 통과했다.
   - `is_capture_edge`: 기존 `assign_split`의 경계 판정을 꺼낸 것이다.
   - `label_window`: 학습 캡처만 cutoff로 나눈다. 다른 캡처의 완전한 창은 용도 이름을 쓴다.
@@ -175,7 +175,7 @@ Claude 확인(2026-11-05, 27초):
 - [zeek_ad/gold_features.py](../zeek_ad/gold_features.py): 특징 사전 v1의 18개 특징과 진단 열 `eof_candidate_count`.
 - [scripts/build_gold.py](../scripts/build_gold.py): 완료된 Silver 5일로 Gold를 만든다.
   - `conn_features_v1.tmp/`에 쓰고 검증한 뒤 `manifest.json`을 넣는다. 마지막에 폴더 이름을 `conn_features_v1/`로 바꿔 게시한다.
-  - 검증 세 가지: 창별 연결 수의 합이 역할 행 수와 같은가, 키가 유일한가, 비율이 0~1 안에 있는가.
+  - 검증 세 가지: 창별 연결 수의 합이 역할 행 수와 같은가, 키가 유일한가, 비율이 0\~1 안에 있는가.
 - [scripts/check_gold_sample.py](../scripts/check_gold_sample.py): 손계산 대조. Silver 원래 행에서 pandas·numpy로 따로 계산해 비교한다.
   - 고르는 창: 역할별 최대 연결 창, duration 전부 결측 창, 무작위 6개.
 - Claude 최소 확인: 문법 검사, 합성 3행으로 API 오류 없음.

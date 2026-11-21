@@ -8,15 +8,15 @@
 
 ## 한눈에 보기
 
-| 항목 | 내용 |
+| 항⁠목 | 내용 |
 | --- | --- |
-| 입력 | Zeek 연결 로그(conn)와 프로토콜 로그(dns·http·ssl·ssh·smb 등) |
-| 학습 | 라벨 없이 월요일 정상 트래픽만 쓴다 |
-| 모델 | 꼬리 희귀도(점 이상), Transformer(문맥적 이상), TGN(관계적 이상). 세 모델의 하루 큐를 순위대로 번갈아 합쳐 조사 큐를 만든다 |
-| 출력 | 조사 큐, 사건 근거, LLM 보고서, Slack 알림(dry-run), Java 관리자 대시보드 |
-| 검증 | CIC-IDS-2017 화~금 확정 공격 16건과 합성 APT 20건, VMware 실습망 실제 트래픽 |
-| 운영 | 파일 단위 자동 파이프라인, MLflow Registry 배포 묶음(교체·롤백), 재현 검사, Docker Compose |
-| 기술 | Zeek 8, PySpark, PyTorch, PyTorch Geometric, scikit-learn, MLflow, LangGraph, Gemini, PostgreSQL 17 + pgvector, FastAPI, Java(대시보드) |
+| 입⁠력 | Zeek 연결 로그(conn)와 프로토콜 로그(dns·http·ssl·ssh·smb 등) |
+| 학⁠습 | 라벨 없이 월요일 정상 트래픽만 쓴다 |
+| 모⁠델 | 꼬리 희귀도(점 이상), Transformer(문맥적 이상), TGN(관계적 이상). 세 모델의 하루 큐를 순위대로 번갈아 합쳐 조사 큐를 만든다 |
+| 출⁠력 | 조사 큐, 사건 근거, LLM 보고서, Slack 알림(dry-run), Java 관리자 대시보드 |
+| 검⁠증 | CIC-IDS-2017 화\~금 확정 공격 16건과 합성 APT 20건, VMware 실습망 실제 트래픽 |
+| 운⁠영 | 파일 단위 자동 파이프라인, MLflow Registry 배포 묶음(교체·롤백), 재현 검사, Docker Compose |
+| 기⁠술 | Zeek 8, PySpark, PyTorch, PyTorch Geometric, scikit-learn, MLflow, LangGraph, Gemini, PostgreSQL 17 + pgvector, FastAPI, Java(대시보드) |
 
 결과를 한 줄로 쓰면 이렇다. 결합 큐는 CIC 확정 공격 16건 중 14건을 하루 상위 50 안에 올렸다. 하지만 상위 10에서는 NAT 주소와의 연결 수만 세는 자명한 기준선(12/16)이 결합(8/16)보다 높았다. 실습망에서는 Kali 포트 스캔을 정상 배경이 있든 없든 매번 잡았고 사건 보고서의 숫자도 관측과 맞았다.
 
@@ -35,7 +35,7 @@ CIC-IDS-2017의 CSV flow를 쓰면 라벨이 바로 붙는다. 하지만 CSV를 
 
 정답을 다시 만드는 데 시간이 들었다. 공식 공격 일정, 원본 CSV, 개선 라벨(CICIDS2017_improved)을 출처로 Zeek 연결에 실행되는 조건을 만들고 모델 점수를 보기 전에 동결했다. 확정 에피소드는 16건이다. 조건이 주소·포트·시각 수준이라 이 표를 독립 검증된 정답이라고 부르지 않고 CSV 기반 논문 수치와 비교하지도 않는다. 측정 기록과 그림은 [EDA 근거](docs/eda-design-evidence.md)에 있다.
 
-학습은 월요일(정상)만으로 한다. 앞 80%로 학습하고 뒤 20%는 임계값용 보류 구간으로 둔다. 화~금은 평가에만 쓴다. 조용하고 오래가는 APT형 행동이 CIC에는 적어서 beacon, 느린 유출, DNS 터널, 측면 이동, 느린 정찰 5종을 화~금 로그 사본에 20건 주입해 따로 평가했다.
+학습은 월요일(정상)만으로 한다. 앞 80%로 학습하고 뒤 20%는 임계값용 보류 구간으로 둔다. 화\~금은 평가에만 쓴다. 조용하고 오래가는 APT형 행동이 CIC에는 적어서 beacon, 느린 유출, DNS 터널, 측면 이동, 느린 정찰 5종을 화\~금 로그 사본에 20건 주입해 따로 평가했다.
 
 ## 모델
 
@@ -57,9 +57,9 @@ Transformer는 학습 창이 1,286개뿐이라 같은 데이터로 Ridge 회귀�
 
 라벨 없는 운영을 가정해 모델은 공격을 판정하지 않고 사람이 볼 순서를 정한다. 그래서 정확도나 F1 대신 하루 조사 큐 상위 N건 안에 든 공격 에피소드 수(Recall@N)로 평가했다. 채점 단위는 내부 자산 × 역할 × 5분 창이고 이어진 이상 창을 사건 하나로 묶는다.
 
-모델 이름 뒤 v2는 특징 버전이다(conn 18개 + 프로토콜 로그 24개). 로그 특징은 화~금 결과를 본 뒤 더해 평가에 노출됐다. 결합 v1은 평가 때의 결합 규칙이고 CIC 숫자는 v1 그대로 둔다. 대괄호 안은 bootstrap 95% 구간이다(Recall@10만).
+모델 이름 뒤 v2는 특징 버전이다(conn 18개 + 프로토콜 로그 24개). 로그 특징은 화\~금 결과를 본 뒤 더해 평가에 노출됐다. 결합 v1은 평가 때의 결합 규칙이고 CIC 숫자는 v1 그대로 둔다. 대괄호 안은 bootstrap 95% 구간이다(Recall@10만).
 
-**CIC 화~금, 확정 정답 에피소드 16건**
+**CIC 화\~금, 확정 정답 에피소드 16건**
 
 | 큐 | Recall@10 | Recall@50 |
 | --- | --- | --- |
@@ -119,7 +119,7 @@ Kali 10.10.0.50 ── nmap -sT -p 1-1000 (03:45 UTC) ──▶ 배포 VM 10.10.
 
 측정한 것
 
-1. VM에서 실시간으로 도는 처리(수집 → Zeek → 다시 계산 → 세 모델)는 같은 정상 트래픽(CIC 월요일 보류 35분 재생)에 배치와 비슷한 점수를 낸다. 창 단위 순위 상관은 0.70~0.83이다. 꼬리 희귀도는 이상 판정 비율까지 같다(6%).
+1. VM에서 실시간으로 도는 처리(수집 → Zeek → 다시 계산 → 세 모델)는 같은 정상 트래픽(CIC 월요일 보류 35분 재생)에 배치와 비슷한 점수를 낸다. 창 단위 순위 상관은 0.70\~0.83이다. 꼬리 희귀도는 이상 판정 비율까지 같다(6%).
 2. 다른 점도 측정했다. Transformer는 자산 이력이 없는 첫 창에서, TGN은 새 노드 문맥에서 이상 판정이 는다.
 3. Kali 포트 스캔(nmap -sT 1,000포트, -sV)은 정상 배경이 있든 없든 꼬리 희귀도·Transformer가 매번 잡았다. ping은 Kali 쪽에서 두 모델 모두 잡지 않았다. 사건 보고서의 숫자(포트 수, 거부 수)는 관측과 맞았다.
 4. TGN은 스캔당하는 서버와 통신한 정상 클라이언트를 스캔하는 칸에서만 함께 꼽았다(앞뒤 배경 칸에서는 0). 그래프 이웃 전파의 효과이자 한계다.
@@ -172,7 +172,7 @@ docker compose -f deploy/compose.yaml --env-file deploy/.env up -d && python scr
 | [zeek_ad/](zeek_ad/) | 라이브러리: 창·사건, 특징, 모델(기준선·Transformer·TGN), 결합, 배포 묶음, worker, 근거, LLM 입력·보고서·검증, RAG, LangGraph, Slack, 수집·리비전 |
 | [scripts/](scripts/) | 실행 스크립트: Zeek, Silver·Gold, 학습·평가, 묶음 등록, 실시간 처리, API |
 | [configs/](configs/) | 고정한 설정(자산 대역, 창, 모델, 결합 v1·v2, 에이전트·프롬프트, RAG, 파이프라인) |
-| [db/migrations/](db/migrations/) | PostgreSQL 스키마(001~017): 채점 결과, 근거, 대시보드 뷰, 사건 상태, 검토 결정 함수, 분석가 결론 집계 |
+| [db/migrations/](db/migrations/) | PostgreSQL 스키마(001\~017): 채점 결과, 근거, 대시보드 뷰, 사건 상태, 검토 결정 함수, 분석가 결론 집계 |
 | [deploy/](deploy/) | Docker Compose(DB·MLflow·API·파이프라인·수집기), 이미지, 묶음 내보내기·가져오기 |
 | [tests/](tests/) | 단위 시험(창·사건, 결합, 수집·리비전, 보고서 검증, 그래프 재개, Slack 등) |
 | [docs/](docs/) | 설계 결정, 진행 기록, 데이터 계약, 배포 안내 |
@@ -182,7 +182,7 @@ docker compose -f deploy/compose.yaml --env-file deploy/.env up -d && python scr
 - [docs/portfolio-summary.md](docs/portfolio-summary.md): 한 장 요약.
 - [docs/design-decisions/](docs/design-decisions/): 설계를 바꾼 결정 19건. 결정마다 배경, 결정, 확인한 것, 한계를 적었다.
 - [docs/design-discussion-log.md](docs/design-discussion-log.md): 설계 질문·이의와 판단 근거 70여 건. 설계를 바꾸지 않은 경우도 적었다.
-- [docs/stage-0-progress.md](docs/stage-0-progress.md) ~ [docs/stage-7-progress.md](docs/stage-7-progress.md): 단계별로 한 일, 실행 결과, 발견한 문제.
+- [docs/stage-0-progress.md](docs/stage-0-progress.md) \~ [docs/stage-7-progress.md](docs/stage-7-progress.md): 단계별로 한 일, 실행 결과, 발견한 문제.
 - [docs/eda-design-evidence.md](docs/eda-design-evidence.md): EDA 측정과 그림.
 - [docs/data-contract-v2.md](docs/data-contract-v2.md): Java 대시보드([zeek_ad_dashboard](https://github.com/prosild/zeek_ad_dashboard))와의 데이터 계약.
 - [docs/README.md](docs/README.md), [scripts/README.md](scripts/README.md): 문서·스크립트 전체 안내.

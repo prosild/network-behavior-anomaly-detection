@@ -13,7 +13,7 @@
 
 ## 어떻게 주입하나
 
-- **위치:** 화~금 Zeek 로그(run-02)의 사본에 넣는다. 합성 캡처는 `syn1-tue`~`syn1-fri`다. 원본 로그와 기존 결과는 그대로다.
+- **위치:** 화\~금 Zeek 로그(run-02)의 사본에 넣는다. 합성 캡처는 `syn1-tue`\~`syn1-fri`다. 원본 로그와 기존 결과는 그대로다.
 - **형식:** conn 행과, 그 uid에 딸린 프로토콜 로그 행(dns, ssl, kerberos, smb_mapping, smb_files, dce_rpc)을 함께 만든다.
   - 필드 이름·순서·`community_id`는 Zeek 출력과 같다. `community_id`는 실제 행으로 계산이 맞는지 시험했다.
   - 크기·history·상태·기록 지연(`_write_ts`)은 월요일 실제 로그를 본떴다.
@@ -25,10 +25,10 @@
 | 패턴 | 행동 | 회피 성격 |
 | --- | --- | --- |
 | `beacon_https` | 새 외부 IP:443에 약 5분 간격(±20%) 작은 TLS 연결, 2시간. 30분마다 C2 도메인 DNS 조회 | 흔한 포트·TLS, 작은 크기 |
-| `slow_exfil` | 새 외부 IP:443에 약 10분 간격 3~8 MB 업로드, 2시간 | 한 창에는 연결 하나뿐 |
-| `dns_tunnel` | 내부 DNS 서버에 긴 무작위 하위 도메인 A 질의, 5~15초 간격 30분 | 흔한 A 질의, 내부 리졸버 경유 |
-| `lateral_smb` | 대상 4개에 Kerberos TGS → SMB ADMIN$ 매핑·실행 파일 쓰기 → DCE-RPC svcctl 서비스 생성·시작(psexec 방식), 10~20분 간격 | 정상 SMB·Kerberos와 같은 포트 |
-| `internal_scan` | 대상 6개 × 포트 6개를 섞어 60~140초 간격 connect scan | 느린 속도 |
+| `slow_exfil` | 새 외부 IP:443에 약 10분 간격 3\~8 MB 업로드, 2시간 | 한 창에는 연결 하나뿐 |
+| `dns_tunnel` | 내부 DNS 서버에 긴 무작위 하위 도메인 A 질의, 5\~15초 간격 30분 | 흔한 A 질의, 내부 리졸버 경유 |
+| `lateral_smb` | 대상 4개에 Kerberos TGS → SMB ADMIN$ 매핑·실행 파일 쓰기 → DCE-RPC svcctl 서비스 생성·시작(psexec 방식), 10\~20분 간격 | 정상 SMB·Kerberos와 같은 포트 |
+| `internal_scan` | 대상 6개 × 포트 6개를 섞어 60\~140초 간격 connect scan | 느린 속도 |
 
 - 외부 IP는 월요일 train 외부 IP가 많이 쓰는 /16 대역(클라우드 등) 안에서, 다섯 날 어디에도 없는 주소로 만든다. 낯선 대역만으로 티가 나지 않게 하기 위해서다.
 - 시각은 무작위(seed 고정)다. 캡처 양끝에서 30분 떨어뜨린다. 같은 (자산, 역할)의 CIC 정답 창이나 다른 합성 정답 창과 30분 안에 있으면 다시 뽑는다.

@@ -71,7 +71,7 @@
 ## 세 번째 작업: 추론 worker(2026-11-12)
 
 ### 코드
-- [configs/worker/inputs.v1.json](../configs/worker/inputs.v1.json): 채점할 캡처 묶음(`cic`: 화~금, `synthetic`: syn1 화~금)과 입력 경로. 입력은 이미 만든 Gold v2·TGN 그래프다(배치 재생).
+- [configs/worker/inputs.v1.json](../configs/worker/inputs.v1.json): 채점할 캡처 묶음(`cic`: 화\~금, `synthetic`: syn1 화\~금)과 입력 경로. 입력은 이미 만든 Gold v2·TGN 그래프다(배치 재생).
 - [zeek_ad/worker.py](../zeek_ad/worker.py), [scripts/run_worker.py](../scripts/run_worker.py):
   1. 시작할 때 alias `champion`을 버전 번호로 풀어 고정하고 `models:/zeekad-fusion/<버전>`으로 받는다. 받은 manifest 해시를 Registry 태그와 대조한다. 묶음을 만든 코드와 지금 `zeek_ad` 코드의 해시가 다르면 멈춘다(worker는 이 저장소 코드를 import하기 때문이다).
   2. 트랜잭션 1: 작업 키(캡처 × 입력 해시 × 묶음)로 `scoring_job`을 만든다(running). 이미 succeeded면 건너뛴다. 입력 해시는 Gold manifest·그래프 manifest·캡처 경계 파일 해시로 만든다.
@@ -81,7 +81,7 @@
 - [scripts/verify_worker_db.py](../scripts/verify_worker_db.py): 읽기 전용 계정으로 DB의 결합 큐를 다시 읽어 단계 3 결합 평가와 같은 Recall@N인지 확인한다.
 
 ### 실행과 검사(Claude 실행)
-- `python scripts/run_worker.py --set cic synthetic`: 작업 8개, 캡처당 15~24초, 전체 2분 35초. 창 점수 40,182행(창 × 3모델), 사건 2,128개, 사건 창 2,921개.
+- `python scripts/run_worker.py --set cic synthetic`: 작업 8개, 캡처당 15\~24초, 전체 2분 35초. 창 점수 40,182행(창 × 3모델), 사건 2,128개, 사건 창 2,921개.
 - 추적 확인: DB에서 다시 읽은 큐가 단계 3 결합 평가(`outputs/eval/20261111T014619Z-fusion_v1`)와 8개 캡처 모두 사건 수·Recall@5/10/20/50이 같다(합성은 CIC 사건을 빼지 않은 전체 큐와 비교).
 - 중복 방지: 같은 명령을 다시 돌리면 8개 모두 "이미 완료, 건너뜀". 행 수가 그대로다.
 - 장애 복구(쓰기 중 중단, commit 전후 중단)는 다음 작업에서 시험한다.
@@ -106,7 +106,7 @@
 | E worker 두 개 동시 실행 | 둘 다 채점, 한쪽만 commit | 다른 쪽은 행 잠금을 기다린 뒤 succeeded를 보고 쓰지 않음, 행 수 1배 |
 
 - 해석: 결과는 commit 단위로만 보인다. 중간에 멈추면 아무것도 남지 않고, 작업 상태(running·failed)가 남아 다음 실행이 이어받는다. commit 뒤에 멈추면 다음 실행이 건너뛴다.
-- 한계: 같은 PC의 단일 PostgreSQL에서 프로세스 종료만 시험했다. DB 서버 자체의 중단, 디스크 오류는 시험하지 않았다. Parquet 파일 쪽 원자성(임시 폴더 → 이름 바꾸기)은 단계 2~3 빌드 스크립트의 규칙이다.
+- 한계: 같은 PC의 단일 PostgreSQL에서 프로세스 종료만 시험했다. DB 서버 자체의 중단, 디스크 오류는 시험하지 않았다. Parquet 파일 쪽 원자성(임시 폴더 → 이름 바꾸기)은 단계 2\~3 빌드 스크립트의 규칙이다.
 
 ## 다섯 번째 작업: 근거 조회 API와 대시보드 데이터 계약(2026-11-12)
 
@@ -128,7 +128,7 @@
 
 ### 근거 조회 API([zeek_ad/api.py](../zeek_ad/api.py), [scripts/run_api.py](../scripts/run_api.py))
 - FastAPI, 읽기 전용 계정 `zeekad_api`, `127.0.0.1:8000`. 경로 3개: 작업 목록, 캡처 큐, 사건 근거(모델별 최고 점수·임계값·임계값 이상 여부, 관측된 자산 이름과 출처, `evidence.v1`).
-- 입력 검증: `capture_id`는 정규식, `limit` 1~200, 값은 모두 파라미터 바인딩. DB 오류는 내부 문구 없이 503.
+- 입력 검증: `capture_id`는 정규식, `limit` 1\~200, 값은 모두 파라미터 바인딩. DB 오류는 내부 문구 없이 503.
 - [scripts/check_api.py](../scripts/check_api.py) 12/12 통과: 응답 형식, 수요일 1위 사건 근거, 잘못된 입력 422·404, `dashboard_ro`는 뷰 2,128행을 읽고 원래 표는 거부, `zeekad_api` 쓰기 거부.
 - 패키지: fastapi 0.162.0, uvicorn 0.54.0, httpx 0.28.1을 [requirements.txt](../requirements.txt)에 직접 의존으로 적었다(이미 잠금 파일에 있던 버전).
 

@@ -3,7 +3,7 @@
 모두 프로젝트 루트에서 `zeek-ad` 환경으로 실행한다(예: `python scripts/run_zeek.py --help`). 스크립트마다 맨 위 설명에 입력·출력·예시가 있다.
 경로가 Compose·Dockerfile·감시 프로그램·평가 동결 목록에 들어 있어서 폴더를 나누지 않고 여기서 단계별로 안내한다.
 
-## 1. 데이터 처리 (단계 0~2)
+## 1. 데이터 처리 (단계 0\~2)
 
 PCAP → Zeek → Silver → Gold → 그래프 순서로 만든다.
 
@@ -20,7 +20,7 @@ PCAP → Zeek → Silver → Gold → 그래프 순서로 만든다.
 | [build_sequences.py](build_sequences.py) | Gold 창 → Transformer 입력 시퀀스 |
 | [build_tgn_events.py](build_tgn_events.py), [build_tgn_dataset.py](build_tgn_dataset.py) | 연결 이벤트 표 → TGN 시간 그래프 데이터 |
 | [build_ground_truth.py](build_ground_truth.py) | 동결한 정답 에피소드 조건을 Silver에 실행해 연결·창 대응표를 만든다(평가 전용) |
-| [build_synthetic_zeek.py](build_synthetic_zeek.py) | 합성 APT 패턴을 화~금 Zeek 로그 사본에 주입(DD-008) |
+| [build_synthetic_zeek.py](build_synthetic_zeek.py) | 합성 APT 패턴을 화\~금 Zeek 로그 사본에 주입(DD-008) |
 | [build_eda_part1.py](build_eda_part1.py), [build_eda_part2.py](build_eda_part2.py) | EDA 그림과 통계([docs/eda-design-evidence.md](../docs/eda-design-evidence.md)) |
 | [draw_architecture.py](draw_architecture.py) | README 구조도(`docs/figures/architecture.png`) |
 
@@ -28,7 +28,7 @@ PCAP → Zeek → Silver → Gold → 그래프 순서로 만든다.
 
 | 스크립트 | 하는 일 |
 | --- | --- |
-| [run_baselines.py](run_baselines.py) | 꼬리 희귀도·Isolation Forest를 월요일로 적합하고 화~금을 Recall@N으로 평가 |
+| [run_baselines.py](run_baselines.py) | 꼬리 희귀도·Isolation Forest를 월요일로 적합하고 화\~금을 Recall@N으로 평가 |
 | [run_transformer.py](run_transformer.py) | Transformer 학습·평가(DD-002) |
 | [run_tgn.py](run_tgn.py) | TGN 학습·평가(DD-007) |
 | [run_fusion.py](run_fusion.py) | 세 모델 결합 평가(DD-009) |
@@ -77,7 +77,7 @@ RAG, LLM 보고서, 전송 판단, LangGraph를 다룬다.
 | [capture_lab.sh](capture_lab.sh), [capture_rotate.sh](capture_rotate.sh) | 수집기: 실습망 카드만 캡처, 5분 시계 경계마다 파일을 수신 폴더로 |
 | [move_rotated.sh](move_rotated.sh) | (예전 방식) tcpdump `-z`로 다 쓴 파일을 수신 폴더로 옮기기 |
 | [live_watcher.py](live_watcher.py) | 감시 프로그램: 새 파일 → Zeek → 그날 다시 계산 → 에이전트 → 검토 재개 |
-| [live_recompute.py](live_recompute.py) | 그날 받은 파일 전체로 Silver~채점~근거를 다시 계산(리비전), 오래된 리비전 정리 |
+| [live_recompute.py](live_recompute.py) | 그날 받은 파일 전체로 Silver\~채점\~근거를 다시 계산(리비전), 오래된 리비전 정리 |
 | [live_agent.py](live_agent.py) | 최신 채점 작업의 새·늘어난 사건을 LangGraph로 처리 |
 | [prune_revisions.py](prune_revisions.py) | 지난 날짜의 리비전 폴더 정리 |
 | [lab_scenario.sh](lab_scenario.sh) | Kali 시험 시나리오(5분 칸마다 활동 하나) |

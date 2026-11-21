@@ -114,7 +114,7 @@ VMnet2를 이미 만들었다면 지우지 않아도 된다. 2단계에서 설�
 6. **`Network configuration`**: 카드가 하나(예: `ens33`, 종류 `eth`) 보인다.
    - 바라는 상태: 카드 아래에 `DHCPv4  192.168.x.x/24`가 표시된다(x는 2단계에서 적은 VMnet8 대역).
    - 주소가 없거나 `disabled`이면: 카드를 고르고 `Enter` → `Edit IPv4` → `IPv4 Method`를 `Automatic (DHCP)` → `Save`. 잠시 뒤 주소가 나타난다.
-   - IPv6는 `Disabled`로 둔다. VMware NAT은 기본으로 IPv6를 주지 않는다. DHCP로 두면 부팅 때 오지 않을 주소를 기다리느라 1~2분씩 멈출 수 있다. `Edit IPv6`에서 `Disabled`인지 확인한다.
+   - IPv6는 `Disabled`로 둔다. VMware NAT은 기본으로 IPv6를 주지 않는다. DHCP로 두면 부팅 때 오지 않을 주소를 기다리느라 1\~2분씩 멈출 수 있다. `Edit IPv6`에서 `Disabled`인지 확인한다.
    - **이 `192.168.x.x` 주소를 적어 둔다.** 앞으로 `<NAT 주소>`라고 부른다. 관리 접속과 MLflow 화면 주소다.
    - 확인되면 `Done`.
    - 주소가 끝내 안 잡히면 Windows `services.msc`에서 `VMware DHCP Service`와 `VMware NAT Service`가 실행 중인지 본다.
@@ -196,7 +196,7 @@ timedatectl                                 # Time zone: Etc/UTC, System clock s
 sudo reboot
 ```
 - 시간대는 UTC 그대로 둔다. 수집 파일 이름과 날짜(캡처 ID `lab-YYYYMMDD`)는 UTC 기준이다.
-- 시계 동기화가 `no`이면 1~2분 뒤 다시 본다. 패킷 시각이 틀리면 창 점수가 엉뚱한 날짜에 쌓인다.
+- 시계 동기화가 `no`이면 1\~2분 뒤 다시 본다. 패킷 시각이 틀리면 창 점수가 엉뚱한 날짜에 쌓인다.
 
 ## 6. 실습망 카드(VMnet2) 달고 주소 정하기
 1. VM을 끈다: `ssh zeekad-vm` → `sudo poweroff`. VMware 화면에서 `Powered Off`가 될 때까지 기다린다.
