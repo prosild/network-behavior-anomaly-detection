@@ -3,7 +3,9 @@
 모두 프로젝트 루트에서 `zeek-ad` 환경으로 실행한다(예: `python scripts/run_zeek.py --help`). 스크립트마다 맨 위 설명에 입력·출력·예시가 있다.
 경로가 Compose·Dockerfile·감시 프로그램·평가 동결 목록에 들어 있어서 폴더를 나누지 않고 여기서 단계별로 안내한다.
 
-## 1. 데이터 처리: PCAP → Zeek → Silver → Gold → 그래프 (단계 0~2)
+## 1. 데이터 처리 (단계 0~2)
+
+PCAP → Zeek → Silver → Gold → 그래프 순서로 만든다.
 
 | 스크립트 | 하는 일 |
 | --- | --- |
@@ -50,7 +52,9 @@
 | [build_evidence.py](build_evidence.py) | 사건 근거 요약과 자산 관측을 DB에 쓴다 |
 | [run_api.py](run_api.py), [check_api.py](check_api.py) | 근거 조회 API(읽기 전용) 띄우기와 계약 확인 |
 
-## 4. 에이전트: RAG·LLM 보고서·전송 판단·LangGraph (단계 5)
+## 4. 에이전트 (단계 5)
+
+RAG, LLM 보고서, 전송 판단, LangGraph를 다룬다.
 
 | 스크립트 | 하는 일 |
 | --- | --- |

@@ -1,12 +1,12 @@
 # 문서 안내
 
-처음이면 [저장소 README](../README.md) → [한 장 요약](portfolio-summary.md) 순서로 읽는다. 아래는 나머지 문서를 무엇을 알고 싶은지에 따라 나눈 것이다.
+처음이면 [저장소 README](../README.md) → [한 장 요약](portfolio-summary.md) 순서로 읽는다. 나머지 문서는 주제별로 나눴다.
 
-## 설계: 무엇을 왜 그렇게 정했나
+## 설계
 
 | 문서 | 내용 |
 | --- | --- |
-| [FINAL_PROJECT_DESIGN.md](../FINAL_PROJECT_DESIGN.md) | 구현 기준인 최종 설계. 2.2절 표에 이후 설계 결정(DD) 목록이 있고, DD가 본문보다 우선한다 |
+| [FINAL_PROJECT_DESIGN.md](../FINAL_PROJECT_DESIGN.md) | 구현 기준인 최종 설계. 2.2절 표에 이후 설계 결정(DD) 목록이 있다. DD가 본문보다 우선한다 |
 | [design-decisions/](design-decisions/) | 설계 결정 DD-001~019. 결정마다 배경, 결정, 확인한 것, 한계를 적었다 |
 | [design-discussion-log.md](design-discussion-log.md) | 설계 질문·이의와 판단 근거(Q1~). 설계를 바꾸지 않은 경우도 적었다 |
 | [IMPLEMENTATION_CHECKLIST.md](../IMPLEMENTATION_CHECKLIST.md) | 단계별 검증 조건(V1~V7) |
@@ -23,25 +23,29 @@
 | [feature-dictionary-v1.md](feature-dictionary-v1.md), [feature-dictionary-v2.md](feature-dictionary-v2.md) | 특징 사전(v1 conn 18개, v2는 프로토콜 로그 24개를 더한 42개) |
 | [ground-truth-v1.md](ground-truth-v1.md) | 정답 에피소드를 만든 방법과 목록(평가 전용) |
 
-## 운영: 실제로 돌리기
+## 운영
 
 | 문서 | 내용 |
 | --- | --- |
 | [vm-deployment.md](vm-deployment.md) | VMware 배포 VM과 Kali 실습망을 처음부터 만드는 순서, 자주 쓰는 명령, 모델 교체·롤백 |
 | [live-pipeline.md](live-pipeline.md) | 파일 단위 자동 파이프라인의 동작 원리와 켜는 법 |
 
-## Java 관리자 대시보드 연동(별도 저장소 [zeek_ad_dashboard](https://github.com/prosild/zeek_ad_dashboard))
+## Java 관리자 대시보드 연동
+
+대시보드는 별도 저장소 [zeek_ad_dashboard](https://github.com/prosild/zeek_ad_dashboard)에 있다.
 
 | 문서 | 내용 |
 | --- | --- |
-| [data-contract-v2.md](data-contract-v2.md) | **현재 계약.** 대시보드가 읽는 뷰와 쓰는 DB 함수(상태 변경, 검토 결정), 결론 집계 |
+| [data-contract-v2.md](data-contract-v2.md) | 현재 계약. 대시보드가 읽는 뷰와 쓰는 DB 함수(상태 변경, 검토 결정), 결론 집계 |
 | [data-contract-v1.md](data-contract-v1.md) | 첫 계약(v2가 이어받음) |
 | [java-admin-dashboard-requirements.md](java-admin-dashboard-requirements.md) | 대시보드 요구사항 |
 | [java-dashboard-agent-brief.md](java-dashboard-agent-brief.md) | 대시보드를 만드는 쪽에 준 안내 |
 | [dashboard-handoff-2026-11-19.md](dashboard-handoff-2026-11-19.md) | 2026-11-18~19 변경 사항 전달 |
 | [dashboard-handoff-2026-11-21.md](dashboard-handoff-2026-11-21.md) | 2026-11-21 변경 사항 전달(모델·수집 구간 표시 이름, LLM 요청 모델) |
 
-## 진행 기록: 한 일, 실행 결과, 발견한 문제
+## 진행 기록
+
+단계마다 한 일, 실행 결과, 발견한 문제를 적었다.
 
 | 문서 | 단계 |
 | --- | --- |
