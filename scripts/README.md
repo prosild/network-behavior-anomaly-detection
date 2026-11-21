@@ -22,6 +22,7 @@ PCAP → Zeek → Silver → Gold → 그래프 순서로 만든다.
 | [build_ground_truth.py](build_ground_truth.py) | 동결한 정답 에피소드 조건을 Silver에 실행해 연결·창 대응표를 만든다(평가 전용) |
 | [build_synthetic_zeek.py](build_synthetic_zeek.py) | 합성 APT 패턴을 화~금 Zeek 로그 사본에 주입(DD-008) |
 | [build_eda_part1.py](build_eda_part1.py), [build_eda_part2.py](build_eda_part2.py) | EDA 그림과 통계([docs/eda-design-evidence.md](../docs/eda-design-evidence.md)) |
+| [draw_architecture.py](draw_architecture.py) | README 구조도(`docs/figures/architecture.png`) |
 
 ## 2. 학습·평가 (단계 3)
 
