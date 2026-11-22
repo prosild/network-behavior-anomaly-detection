@@ -84,4 +84,5 @@ RAG, LLM 보고서, 전송 판단, LangGraph를 다룬다.
 | [lab_beacon.sh](lab_beacon.sh) | 비커닝(C2 신호) 생성기: 침해 호스트가 C2에 고정 간격(+지터)으로 짧은 연결 반복(DD-020). 여러 창에 걸친 조용한 공격 |
 | [lab_normal_client.sh](lab_normal_client.sh) | 타깃 정상 배경 생성기: 여러 목적지·포트에 불규칙한 간격으로 웹 요청(DD-020). 비커닝과 대비되는 originator 기준 |
 | [lab_exfil.sh](lab_exfil.sh) | 느린 유출 생성기: 침해 호스트가 C2로 큰 데이터를 창마다 나눠 올림(DD-020, DD-008 slow_exfil의 실제 버전). 연결은 적고 바이트가 큰 유형 |
+| [lab_lateral.sh](lab_lateral.sh) | 측면 이동 생성기: pivot이 여러 내부 호스트의 SMB(445)로 퍼짐(DD-020). 여러 호스트의 한 포트 fan-out, TGN(관계적 이상) 시험 |
 | [build_lab_background.py](build_lab_background.py), [lab_replay.sh](lab_replay.sh) | 정상 배경 PCAP 만들기와 재생(DD-017) |
