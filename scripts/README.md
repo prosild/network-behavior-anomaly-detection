@@ -80,5 +80,7 @@ RAG, LLM 보고서, 전송 판단, LangGraph를 다룬다.
 | [live_recompute.py](live_recompute.py) | 그날 받은 파일 전체로 Silver\~채점\~근거를 다시 계산(리비전), 오래된 리비전 정리 |
 | [live_agent.py](live_agent.py) | 최신 채점 작업의 새·늘어난 사건을 LangGraph로 처리 |
 | [prune_revisions.py](prune_revisions.py) | 지난 날짜의 리비전 폴더 정리 |
-| [lab_scenario.sh](lab_scenario.sh) | Kali 시험 시나리오(5분 칸마다 활동 하나) |
+| [lab_scenario.sh](lab_scenario.sh) | Kali 시험 시나리오(5분 칸마다 활동 하나: ping·nmap) |
+| [lab_beacon.sh](lab_beacon.sh) | 비커닝(C2 신호) 생성기: 침해 호스트가 C2에 고정 간격(+지터)으로 짧은 연결 반복(DD-020). 여러 창에 걸친 조용한 공격 |
+| [lab_normal_client.sh](lab_normal_client.sh) | 타깃 정상 배경 생성기: 여러 목적지·포트에 불규칙한 간격으로 웹 요청(DD-020). 비커닝과 대비되는 originator 기준 |
 | [build_lab_background.py](build_lab_background.py), [lab_replay.sh](lab_replay.sh) | 정상 배경 PCAP 만들기와 재생(DD-017) |

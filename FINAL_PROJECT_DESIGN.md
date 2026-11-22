@@ -81,6 +81,7 @@ WAS 연관 분석, 자동 차단, Kafka, Kubernetes, 대규모 실험망, 초기
 | [DD-017](docs/design-decisions/DD-017-lab-background-traffic.md) | 실습망 시험에 정상 배경을 섞는다: CIC 월요일 보류 구간 재생(내부 주소를 10.10.0.100번대로) + 합성 정상(11-17 생성기). 배포 VM이 실습용 카드로 재생해 실제 수집 경로를 탄다. 배경만 → 배경 + Kali 공격 → 배경만 순서의 5분 칸 시간표. 재생·합성 결과는 표시해 실제 관측 주장과 섞지 않는다 |
 | [DD-018](docs/design-decisions/DD-018-fusion-merge-overlaps.md) | 결합 v2(`fusion.v2.json`, `overlap_policy: merge_windows`): 여러 모델이 겹쳐 꼽은 사건은 하나로 합치고 범위는 모든 모델 창의 합, 사건 ID는 합친 첫 창으로 다시 만든다. v1(DD-009)은 그대로 두고 등록 모델의 새 버전으로 반영한다. CIC 결합 평가 결과는 v1 기준 |
 | [DD-019](docs/design-decisions/DD-019-review-decision-path.md) | 분석가 검토 결정은 대시보드가 DB 함수 `dashboard.decide_review`로 넣고, 멈춘 LangGraph 흐름은 파이프라인(감시 프로그램)이 찾아 재개한다. 근거 API는 읽기 전용 그대로다(Q50 원안 대체) |
+| [DD-020](docs/design-decisions/DD-020-lab-segment-sensor.md) | 배포 VM을 실습망 세그먼트 전체를 promiscuous로 보는 센서로 쓰고(수집 명령은 그대로, VMware host-only vmnet이 제3자 유니캐스트를 뿌림을 실측 확인), 공격 대상 VM(lab-target 10.10.0.20, SSH·HTTP·Samba)을 추가한다. 타깃·Kali는 10.10.0.0/24 안이라 자산 설정 변경 없이 채점된다. 시나리오 우선순위는 비커닝 → 느린 스캔 → 느린 유출. 측면 이동은 타깃 복제 뒤 |
 
 ## 3. 데이터와 관측 단위
 
