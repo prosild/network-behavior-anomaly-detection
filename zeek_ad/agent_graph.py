@@ -14,6 +14,10 @@
   LLM 보고서(약 20초)를 기다리지 않게 하려는 것이다. 정책 규칙은 판단 모델이 막지 못하는 필수 조건이라(DD-001) 먼저 보내도 된다.
   deliver가 LLM 보고서로 한 번 더 기록한다(보고서 버전이 달라 다른 메시지). LLM이 실패해 템플릿이면 같은 키라 다시 남지 않는다.
 - write_report: LLM 1회 보고서 → 형식 검사(report_guard) → 코드 검증 → 통과면 LLM, 아니면 템플릿(설계 9.1절). DB agent_report에 쓴다.
+- 한도 초과(HTTP 429, zeek_ad.quota): rag·write_report·decide의 API 호출은 차단기를 거친다. 한 번 429를 보면 이 그래프(실행 하나)의
+  남은 호출은 하지 않는다. 임베딩이 막히면 BM25로 찾고 흐름은 이어진다. LLM 보고서·판단 모델이 막히면 템플릿 보고서만
+  남기고(전송 판단 없음) QuotaExhausted로 그 사건을 끝낸다. 판단이 없는 사건은 다음 실행이 다시 고른다
+  (agent_store.report_reason의 'retry'). 정책 규칙의 템플릿 알림(early_alert)은 그 전에 이미 나갔다.
 - decide: 정책 규칙 + 판단 모델(gemini-decision-1). A단계라 전송은 정책 규칙이 정한다(DD-001 결론, 2026-11-17).
 - more_evidence: 판단 모델이 "추가 근거 필요"를 고르면 한 번만 맥락 사실(직전 1시간 같은 자산·역할 창, 같은 날 같은 자산의
   다른 사건)을 더해 다시 판단한다. 반복 상한은 MAX_EVIDENCE_ROUNDS다.
@@ -41,7 +45,7 @@ from langgraph.types import interrupt
 from zeek_ad.agent_inputs import (assemble, collect_baseline, collect_evidence, collect_incident,
                                   facts_from_parts, pseudonym_map)
 from zeek_ad.llm_input import query_sentence, template_report
-from zeek_ad.rag import retrieve
+from zeek_ad.quota import Breaker, GuardedClient, QuotaExhausted, blocked_call, retrieve_once
 from zeek_ad.agent_store import save_decision, save_report
 from zeek_ad.llm_input import fact_map
 from zeek_ad.llm_report import call_llm
@@ -163,9 +167,15 @@ def build_graph(res, checkpointer=None):
     """res: {"conn": DB 연결(autocommit), "ctx": InputContext, "client_llm", "client_decision",
              "report_config", "system_prompt", "send_config", "slack_config", "source": 실행 이름,
              "persist": False면 결과 표(agent_report·send_decision·slack_delivery·analyst_review)에 쓰지 않는다(비교 실행용),
+             "embed_breaker"·"llm_breaker": 한도 초과 차단기(zeek_ad.quota.Breaker). 없으면 여기서 만든다,
              "tracing": True면 노드마다 MLflow span을 남긴다}."""
     conn, ctx = res["conn"], res["ctx"]
     persist = res.get("persist", True)
+    # 차단기는 이 그래프로 처리하는 모든 사건이 같이 쓴다(실행 하나 = 프로세스 하나). 임베딩과 LLM은 한도가 달라 따로 둔다
+    embed_breaker = res.get("embed_breaker") or Breaker()
+    llm_breaker = res.get("llm_breaker") or Breaker()
+    client_llm = GuardedClient(res["client_llm"], llm_breaker)
+    client_decision = GuardedClient(res["client_decision"], llm_breaker)
 
     def collect_incident_node(state):
         t0 = time.time()
@@ -196,7 +206,7 @@ def build_graph(res, checkpointer=None):
     def rag(state):
         t0 = time.time()
         query = query_sentence(state["facts"])
-        found, method, error = retrieve(conn, [query], ctx.retrieval, ctx.api_key)
+        found, method, error = retrieve_once(conn, query, ctx.retrieval, ctx.api_key, embed_breaker)
         llm_input = assemble(state["facts"], found[0])
         return {"llm_input": llm_input, "template": template_report(state["facts"], found[0]),
                 "retrieval": {"method": method, "fallback_reason": error},
@@ -220,12 +230,19 @@ def build_graph(res, checkpointer=None):
 
     def write_report(state):
         t0 = time.time()
-        raw = call_llm(res["client_llm"], res["report_config"], res["system_prompt"], state["llm_input"])
+        if llm_breaker.open:       # 앞 사건에서 한도 초과를 봤다. 부르지 않는다
+            raw = blocked_call(res["report_config"].get("model"))
+        else:
+            raw = call_llm(client_llm, res["report_config"], res["system_prompt"], state["llm_input"])
         # 형식이 틀린 응답은 템플릿으로(report_guard). DB에는 LLM 원래 출력(raw)을, 상태에는 검사한 기록(call)을 둔다
         report, kind, verification, call = guarded_final_report(raw, state["llm_input"], state["template"])
+        blocked = llm_breaker.open   # 이 호출이 429였거나 부르지 않았다
         if persist:
+            # 한도 초과 때의 템플릿은 이 사건에 보고서가 없을 때만 남긴다(앞 시도가 쓴 LLM 보고서를 덮지 않는다)
             save_report(conn, state["job_id"], state["incident_id"], state["llm_input"], report, kind, verification,
-                        raw, res["source"], pseudonym_map(state["evidence"], ctx.nets))
+                        raw, res["source"], pseudonym_map(state["evidence"], ctx.nets), overwrite=not blocked)
+        if blocked:
+            raise QuotaExhausted("LLM 보고서: 한도 초과(429). 전송 판단 없이 끝내고 다음 실행에서 다시 한다")
         return {"report": report, "report_kind": kind, "verification": verification, "llm_call": call,
                 "trace": _trace("write_report", t0, report_kind=kind, model_version=call["model_version"],
                                 usage=call.get("usage"), attempts=call.get("attempts"), error=call.get("error"),
@@ -235,7 +252,9 @@ def build_graph(res, checkpointer=None):
     def decide(state):
         t0 = time.time()
         policy = policy_decision(state["llm_input"]["facts"], res["send_config"]["policy"])
-        decision = call_decision(res["client_decision"], res["send_config"]["decision_model"], state["llm_input"])
+        decision = call_decision(client_decision, res["send_config"]["decision_model"], state["llm_input"])
+        if llm_breaker.open:
+            raise QuotaExhausted("판단 모델: 한도 초과(429). 전송 판단 없이 끝내고 다음 실행에서 다시 한다")
         return {"policy": policy, "decision": decision,
                 "trace": _trace("decide", t0, policy=policy["choice"], mandatory=policy["mandatory"],
                                 decision_model=decision["choice"], probabilities=decision["probabilities"])}

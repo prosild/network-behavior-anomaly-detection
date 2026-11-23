@@ -12,6 +12,10 @@
 - 사건마다 실패를 따로 잡는다(run_two_phases). 한 사건이 실패해도 나머지는 끝까지 간다. 1차에서 실패한 사건은 2차를 건너뛴다.
   실패가 있으면 종료 코드 1이다. 감시 프로그램(live_watcher.py)이 다음 주기에 다시 부른다(agent_retries번까지).
   다시 부르면 끝나지 못한 사건만 고른다: 보고서가 없거나, 보고서는 있지만 전송 판단이 없는 사건('retry').
+- API 한도 초과(429)를 한 번 만나면 이 실행의 남은 LLM 호출은 하지 않는다(zeek_ad.quota). 그 사건들은 템플릿 보고서만
+  남고 실패로 끝나므로 위 규칙대로 다음 실행이 다시 고른다. 한도가 풀린 뒤 손으로 부르면 바로 따라잡는다.
+- --redo-failed-calls: 판단까지 끝났지만 API 호출이 실패했던 사건(템플릿 보고서, 판단 모델 실패)도 다시 만든다('redo').
+  시간 초과 같은 실패는 템플릿으로 끝난 것으로 치므로 보통 실행은 다시 고르지 않는다. 손으로 다시 만들 때만 쓴다.
 - 입력 설정은 그 리비전의 worker-inputs.json(Gold 위치)과 configs/assets.lab.v1.json(내부 대역)이다.
   작업의 리비전은 입력 지문(scoring_job.input_manifest_sha256)이 같은 리비전이다(revision_for_job). 작업 = 입력 + 묶음이라
   묶음을 바꿔 같은 리비전을 다시 채점한 작업(단계 7 교체·롤백)도 찾는다.
@@ -54,11 +58,15 @@ def main():
     parser.add_argument("--capture", required=True)
     parser.add_argument("--config", type=Path, default=CONFIG)
     parser.add_argument("--no-trace", action="store_true")
+    parser.add_argument("--redo-failed-calls", action="store_true",
+                        help="API 호출 실패로 템플릿·판단 실패가 된 사건도 다시 만든다")
+    parser.add_argument("--only", action="append", default=[], metavar="INCIDENT_ID",
+                        help="고른 사건 중 이 사건만 처리한다(여러 번 쓸 수 있다)")
     args = parser.parse_args()
     config = json.loads(args.config.read_text(encoding="utf-8"))
 
     from zeek_ad.agent_graph import build_graph
-    from zeek_ad.agent_store import incidents_to_report
+    from zeek_ad.agent_store import failed_call_incidents, incidents_to_report, with_redo
     from zeek_ad.db import connect
 
     with connect("zeekad_worker", autocommit=True) as conn:
@@ -69,14 +77,19 @@ def main():
             sys.exit(f"{args.capture}: 성공한 채점 작업이 없다")
         job_id, input_sha = job
         picked = incidents_to_report(conn, job_id, args.capture)
+        if args.redo_failed_calls:
+            picked = with_redo(picked, failed_call_incidents(conn, job_id, args.capture))
+    if args.only:
+        picked = [(iid, reason) for iid, reason in picked if iid in args.only]
     todo = [iid for iid, _ in picked]
-    counts = {r: sum(reason == r for _, reason in picked) for r in ("new", "changed", "retry")}
+    counts = {r: sum(reason == r for _, reason in picked) for r in ("new", "changed", "retry", "redo")}
     # 이 작업의 입력 묶음 정의(리비전 폴더)를 찾는다: 입력 지문이 같은 리비전
     rev = revision_for_job(PROJECT_ROOT / config["runs_out"] / args.capture, args.capture, input_sha.strip())
     if rev is None:
         sys.exit(f"작업 {job_id}의 리비전 폴더를 찾지 못했다")
     print(f"{args.capture}: 작업 {job_id}, 리비전 {rev.name}, 처리할 사건 {len(todo)}건"
-          f"(새 사건 {counts['new']}, 늘어난 사건 {counts['changed']}, 다시 시도 {counts['retry']})", flush=True)
+          f"(새 사건 {counts['new']}, 늘어난 사건 {counts['changed']}, 다시 시도 {counts['retry']}"
+          + (f", 호출 실패 다시 {counts['redo']}" if counts["redo"] else "") + ")", flush=True)
     if not todo:
         return 0
 

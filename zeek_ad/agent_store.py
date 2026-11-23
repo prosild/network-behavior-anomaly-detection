@@ -8,8 +8,14 @@ from psycopg.types.json import Jsonb
 
 
 def save_report(conn, job_id, incident_id, llm_input, report, report_kind, verification, llm_call, source_run,
-                pseudonyms):
-    """보고서 저장. facts는 llm_input의 사실 목록(보고서를 쓸 때의 것), pseudonyms는 agent_inputs.pseudonym_map 결과."""
+                pseudonyms, overwrite=True):
+    """보고서 저장. facts는 llm_input의 사실 목록(보고서를 쓸 때의 것), pseudonyms는 agent_inputs.pseudonym_map 결과.
+
+    overwrite=False면 이 (작업, 사건)에 보고서가 없을 때만 쓴다(한도 초과 때의 템플릿이 앞 시도의 보고서를 덮지 않게).
+    """
+    if not overwrite and conn.execute("SELECT 1 FROM agent_report WHERE job_id = %s AND incident_id = %s",
+                                      (job_id, incident_id)).fetchone():
+        return
     conn.execute("""INSERT INTO agent_report (job_id, incident_id, input_version, report_kind, report_version,
                         report, verification, llm_call, attack_candidates, source_run, facts, pseudonyms)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -68,6 +74,33 @@ def incidents_to_report(conn, job_id, capture_id):
         if reason:
             out.append((iid, reason))
     return out
+
+
+def failed_call_incidents(conn, job_id, capture_id):
+    """이 작업의 사건 중 API 호출 실패로 끝난 사건(큐 순위 순서). 손으로 다시 만들 때 쓴다(live_agent.py --redo-failed-calls).
+
+    가장 최근 보고서의 LLM 호출이 실패했거나(템플릿으로 대신함) 그 보고서의 판단 모델 호출이 실패한 사건이다.
+    호출 실패는 오류가 'call:'로 시작한다(llm_report.call_llm, send_decision.call_decision). 형식 오류('format:')와
+    검증 탈락은 다시 불러도 같은 결과일 수 있어 넣지 않는다.
+    """
+    rows = conn.execute("""
+        WITH rep AS (
+            SELECT DISTINCT ON (r.incident_id) r.incident_id, r.job_id, r.llm_call
+            FROM agent_report r JOIN scoring_job j ON j.job_id = r.job_id
+            WHERE j.capture_id = %(cap)s ORDER BY r.incident_id, r.job_id DESC)
+        SELECT i.incident_id
+        FROM incident i JOIN rep USING (incident_id)
+             LEFT JOIN send_decision d ON d.job_id = rep.job_id AND d.incident_id = rep.incident_id
+        WHERE i.job_id = %(job)s
+          AND (rep.llm_call->>'error' LIKE 'call:%%' OR d.decision_model->>'error' LIKE 'call:%%')
+        ORDER BY i.queue_rank""", {"job": job_id, "cap": capture_id}).fetchall()
+    return [r[0] for r in rows]
+
+
+def with_redo(picked, redo_ids):
+    """고른 사건 뒤에 다시 만들 사건을 붙인다. 이미 고른 사건은 원래 이유를 그대로 둔다."""
+    seen = {iid for iid, _ in picked}
+    return list(picked) + [(iid, "redo") for iid in redo_ids if iid not in seen]
 
 
 def save_decision(conn, job_id, incident_id, policy, llm_choice, decision_model, shadow, source_run):

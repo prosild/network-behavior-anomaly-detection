@@ -7,6 +7,7 @@ langgraph가 필요하므로 zeek-ad 환경에서 실행한다: python -m unitte
 - 판단 모델 호출이 실패해도 흐름은 멈추지 않고 정책 규칙대로 전송을 정한다.
 - 정책 규칙이 보냄이면 LLM 보고서 전에 템플릿 알림을 먼저 기록하고, LLM 보고서가 나오면 한 번 더 기록한다(Q47).
 - 이전 작업에서 이미 알린 사건(늘어나 다시 처리하는 사건)은 보고서는 다시 쓰고 Slack에는 기록하지 않는다(DD-016 결정 4).
+- LLM 보고서나 판단 모델이 한도 초과(429)면 판단 없이 끝내고, 같은 실행의 다음 사건은 LLM을 부르지 않는다(zeek_ad.quota).
 """
 
 from datetime import datetime, timezone
@@ -17,6 +18,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 
 from zeek_ad import agent_graph
+from zeek_ad.quota import Breaker, QuotaExhausted
 
 FACTS = [{"id": "F01", "name": "queue_rank", "value": 3},
          {"id": "F02", "name": "also_flagged_by_models", "value": ["tail_rarity_v2"]},
@@ -64,8 +66,8 @@ class GraphPathTest(unittest.TestCase):
             "collect_baseline": mock.Mock(return_value=[["baseline_windows",
                                                          {"incident_windows": 1, "baseline_windows": 3}]]),
             "facts_from_parts": mock.Mock(side_effect=lambda *a: [dict(f) for f in FACTS]),
-            "retrieve": mock.Mock(return_value=([[{"attack_id": "T1046", "name": "Network Service Discovery"}]],
-                                                "gemini", None)),
+            "retrieve_once": mock.Mock(return_value=([[{"attack_id": "T1046", "name": "Network Service Discovery"}]],
+                                                     "gemini", None)),
             "template_report": mock.Mock(return_value={"report_version": "template.v1"}),
             "call_llm": mock.Mock(return_value={"report": llm_report, "model_version": "fake", "error": None}),
             "guarded_final_report": mock.Mock(side_effect=lambda call, inp, tpl: (
@@ -195,6 +197,49 @@ class GraphPathTest(unittest.TestCase):
         early = next(t for t in state["trace"] if t["node"] == "early_alert")
         self.assertEqual(early["slack_skipped"], "alerted_before")
 
+
+    def test_llm_quota_stops_calls_for_the_rest_of_the_run(self):
+        # 보고서 호출이 429: 템플릿만 남기고(앞 보고서는 덮지 않게) 판단 없이 끝낸다. 다음 사건은 LLM을 부르지 않는다
+        breaker = self.res["llm_breaker"] = Breaker()
+
+        def rate_limited(*args):
+            breaker.trip("models.generate_content")
+            return {"report": None, "model_version": None, "error": "call: QuotaExhausted"}
+
+        self.mocks["call_llm"].side_effect = rate_limited
+        graph = agent_graph.build_graph(self.res, InMemorySaver())
+        for k, thread in enumerate(("a", "b"), 1):
+            with self.assertRaises(QuotaExhausted):
+                graph.invoke({"job_id": 1, "incident_id": f"cic17-fri|192.168.10.{k}|originator|1"},
+                             {"configurable": {"thread_id": thread}})
+            self.assertEqual(self.mocks["save_report"].call_count, k)
+            self.assertFalse(self.mocks["save_report"].call_args.kwargs["overwrite"])
+        self.assertEqual(self.mocks["call_llm"].call_count, 1)       # 두 번째 사건은 부르지 않았다
+        self.mocks["call_decision"].assert_not_called()
+        self.mocks["save_decision"].assert_not_called()              # 판단이 없으니 다음 실행이 다시 고른다
+        self.assertEqual(self.mocks["record_delivery"].call_count, 2)   # 템플릿 알림(early_alert)은 둘 다 나갔다
+
+    def test_decision_quota_leaves_no_decision(self):
+        breaker = self.res["llm_breaker"] = Breaker()
+
+        def rate_limited(*args):
+            breaker.trip("decisions.create")
+            return decision(None, error="call: RateLimitError")
+
+        self.mocks["call_decision"].side_effect = rate_limited
+        with self.assertRaises(QuotaExhausted):
+            self.run_graph()
+        self.assertTrue(self.mocks["save_report"].call_args.kwargs["overwrite"])   # LLM 보고서는 정상으로 썼다
+        self.mocks["save_decision"].assert_not_called()
+
+    def test_embedding_breaker_is_shared_across_incidents(self):
+        self.mocks["call_decision"].side_effect = [decision("hold"), decision("hold")]
+        graph = agent_graph.build_graph(self.res, InMemorySaver())
+        for thread in ("a", "b"):
+            graph.invoke({"job_id": 1, "incident_id": "cic17-fri|192.168.10.5|originator|1"},
+                         {"configurable": {"thread_id": thread}})
+        first, second = (c.args[4] for c in self.mocks["retrieve_once"].call_args_list)
+        self.assertIs(first, second)
 
     def test_failed_thread_restarts_from_start(self):
         # live_agent.py 다시 시도: 2차(write_report)에서 실패한 thread에 같은 thread_id로 새 입력을 주면 처음부터 다시 돈다

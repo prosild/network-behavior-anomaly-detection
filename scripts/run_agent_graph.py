@@ -52,8 +52,10 @@ def resources(ctx_options=None):
         "ctx": InputContext(api_key=key, **(ctx_options or {})),
         "client_llm": genai.Client(api_key=key, http_options={"api_version": report_cfg["api_version"],
                                                               "timeout": report_cfg["timeout_seconds"] * 1000}),
+        # 판단 모델 쪽 SDK는 기본으로 안에서 4번 더 부른다(429·5xx). call_decision이 이미 다시 부르므로 SDK 재시도는 끈다
         "client_decision": genai.Client(api_key=key, http_options={"api_version": dm["api_version"],
-                                                                   "timeout": dm["timeout_seconds"] * 1000}),
+                                                                   "timeout": dm["timeout_seconds"] * 1000,
+                                                                   "retry_options": {"attempts": 1}}),
         "report_config": report_cfg,
         "system_prompt": (PROJECT_ROOT / report_cfg["system_prompt"]).read_text(encoding="utf-8"),
         "send_config": send_cfg,
