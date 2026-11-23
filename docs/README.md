@@ -42,6 +42,7 @@
 | [java-dashboard-agent-brief.md](java-dashboard-agent-brief.md) | 대시보드를 만드는 쪽에 준 안내 |
 | [dashboard-handoff-2026-11-19.md](dashboard-handoff-2026-11-19.md) | 2026-11-18\~19 변경 사항 전달 |
 | [dashboard-handoff-2026-11-21.md](dashboard-handoff-2026-11-21.md) | 2026-11-21 변경 사항 전달(모델·수집 구간 표시 이름, LLM 요청 모델) |
+| [dashboard-handoff-2026-11-23.md](dashboard-handoff-2026-11-23.md) | 2026-11-23 Slack 스레드 열 질문 회신(도입 전 기록의 null, 새 캡처 표시) |
 
 ## 진행 기록
 
