@@ -85,4 +85,6 @@ RAG, LLM 보고서, 전송 판단, LangGraph를 다룬다.
 | [lab_normal_client.sh](lab_normal_client.sh) | 타깃 정상 배경 생성기: 여러 목적지·포트에 불규칙한 간격으로 웹 요청(DD-020). 비커닝과 대비되는 originator 기준 |
 | [lab_exfil.sh](lab_exfil.sh) | 느린 유출 생성기: 침해 호스트가 C2로 큰 데이터를 창마다 나눠 올림(DD-020, DD-008 slow_exfil의 실제 버전). 연결은 적고 바이트가 큰 유형 |
 | [lab_lateral.sh](lab_lateral.sh) | 측면 이동 생성기: pivot이 여러 내부 호스트의 SMB(445)로 퍼짐(DD-020). 여러 호스트의 한 포트 fan-out, TGN(관계적 이상) 시험 |
+| [lab_bruteforce.sh](lab_bruteforce.sh) | SSH 무차별 대입 생성기: 타깃 22에 연결·인증을 빠르게 반복(DD-020, TA0006). 한 호스트 한 포트에 연결 쏟아지는 유형 |
+| [lab_dns_tunnel.sh](lab_dns_tunnel.sh) | DNS 터널 생성기: 질의자가 C2 도메인의 긴 무작위 하위 도메인을 DNS 서버에 질의(DD-020, DD-008 dns_tunnel의 실제 버전). 흔한 프로토콜에 숨는 조용한 유형 |
 | [build_lab_background.py](build_lab_background.py), [lab_replay.sh](lab_replay.sh) | 정상 배경 PCAP 만들기와 재생(DD-017) |
