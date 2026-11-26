@@ -68,6 +68,7 @@ RAG, LLM 보고서, 전송 판단, LangGraph를 다룬다.
 | [build_agent_inputs.py](build_agent_inputs.py) | 사례 사건마다 LLM 입력(허용 목록·가명), 검색 결과, 템플릿 보고서 |
 | [run_agent_reports.py](run_agent_reports.py) | LLM 보고서와 검증, 실패하면 템플릿 |
 | [measure_report_guard.py](measure_report_guard.py) | 형식 검사(`zeek_ad/report_guard.py`) 규칙별로 실제 응답 CSV에서 거부 수·칸별 길이·서식 문자 수를 잰다(규칙을 켜기 전 확인) |
+| [compare_report_prompts.py](compare_report_prompts.py) | 보고서 시스템 프롬프트 후보를 같은 사례 입력으로 돌려 검증 통과 수·전송 권고·문장의 내부 키 이름 수를 기준과 견준다(DB에 쓰지 않음, Q82) |
 | [run_send_decisions.py](run_send_decisions.py), [score_send_decisions.py](score_send_decisions.py) | Slack 전송 판단 세 방식 그림자 비교와 정답 기준 채점 |
 | [load_agent_results.py](load_agent_results.py), [backfill_report_facts.py](backfill_report_facts.py) | 파일 결과를 DB로 옮기기, 예전 보고서에 사실 목록 채우기(한 번) |
 | [run_slack.py](run_slack.py) | 보낼 사건의 Slack 메시지 기록(dry-run) |
