@@ -164,6 +164,7 @@ LLM 보고서는 분석가가 읽기 편하지만 숫자를 틀리거나 지어�
 - LLM에는 허용 목록의 수치와 가명(H·I*·X*)만 보내고 실제 IP와 날짜는 보내지 않는다. MLflow trace에도 실제 IP를 남기지 않는다.
 - 보고서의 주장마다 근거 사실 번호를 달게 하고 숫자·자산·ATT&CK ID를 코드로 검증한다. 실패하면 템플릿 보고서로 대신한다(평가 30건 중 LLM 28, 템플릿 2).
 - ATT&CK 문서를 pgvector에 넣고 Gemini 임베딩으로 검색한다. 같은 질의 16개로 비교했을 때 hit@5가 0.938로 BM25(0.750)보다 높아 이 방식을 골랐다. LLM에는 검색된 기법의 ID·이름·전술만 후보로 넘긴다.
+- 로그의 문장이 LLM에 지시로 읽히는 간접 프롬프트 인젝션은 구조로 막는다. 도메인·URI·사용자 이름 같은 자유 문자열은 LLM 입력에 넣지 않는다. 공격 문장 16종을 로그 필드·검색 문서·LLM 응답 자리에 넣어 보는 시험(약 1,000개 조합)으로 이를 고정했고, 시험이 찾은 구멍(LLM 응답이 보고서 버전을 덮어쓸 수 있던 것, 제어 문자·URL·긴 문장이 화면으로 가던 것)은 응답 검사에서 막았다. 문장의 뜻은 판별하지 않는다. 알림은 정책 규칙이 정한다([넣어 본 것과 막힌 곳](docs/llm-injection-tests.md)).
 - 알림은 LLM 보고서(건당 약 30초)를 기다리지 않고 템플릿 보고서로 먼저 보낸다.
 - Slack 전송 여부를 판단 모델(Gemini)에 맡기기 전에 그림자로 비교했다. 알림은 29 → 16건으로 줄었지만 공격 관련 사건 11건을 바로 보내지 않았다(대부분 분석가 검토로 돌림). 알림 수보다 공격 관련 사건을 바로 알리는 쪽이 중요해서 전송은 정책 규칙에 맡겼다.
 - LangGraph 흐름은 분석가 검토에서 멈춘다(interrupt). 대시보드가 DB 함수로 결정을 넣으면 파이프라인이 흐름을 재개해 사건 상태를 바꾸고 후속 알림을 남긴다. 같은 자산의 미해결 알림이 60분 안에 있으면 Slack 스레드로 묶는다.
@@ -191,7 +192,7 @@ LLM 보고서는 분석가가 읽기 편하지만 숫자를 틀리거나 지어�
 ```bash
 conda env create -f environment.yml && conda activate zeek-ad
 python3 scripts/check_inputs.py                 # 원본 입력 경로·크기 확인(내용은 읽거나 바꾸지 않음)
-python -m unittest discover -s tests            # 시험 291개(DB·LLM·네트워크 없이 몇 초)
+python -m unittest discover -s tests            # 시험 334개(DB·LLM·네트워크 없이 몇 초)
 python scripts/make_env.py                      # deploy/.env를 무작위 비밀번호로 만든다(Gemini 키는 직접 넣는다)
 docker compose -f deploy/compose.yaml --env-file deploy/.env up -d && python scripts/db_migrate.py
 ```
@@ -221,6 +222,7 @@ docker compose -f deploy/compose.yaml --env-file deploy/.env up -d && python scr
 - [docs/stage-0-progress.md](docs/stage-0-progress.md) \~ [docs/stage-7-progress.md](docs/stage-7-progress.md): 단계별로 한 일, 실행 결과, 발견한 문제.
 - [docs/eda-design-evidence.md](docs/eda-design-evidence.md): EDA 측정과 그림.
 - [docs/lab-attack-detection.md](docs/lab-attack-detection.md): 실습망 공격 8종을 잡았는지와 걸린 시간, 판정 기준.
+- [docs/llm-injection-tests.md](docs/llm-injection-tests.md): 간접 프롬프트 인젝션 시험과 LLM 응답 검사.
 - [docs/data-contract-v2.md](docs/data-contract-v2.md): Java 대시보드([nbad-dashboard](https://github.com/prosild/nbad-dashboard))와의 데이터 계약.
 - [docs/README.md](docs/README.md), [scripts/README.md](scripts/README.md): 문서·스크립트 전체 안내.
 
