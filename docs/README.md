@@ -1,5 +1,7 @@
 # 문서 안내
 
+프로젝트의 처음 이름은 `zeek_AD`였다. 운영 문서, 날짜가 붙은 작업 기록, 데이터 계약 문서는 그 이름을 그대로 둔다.
+
 처음이면 [저장소 README](../README.md) → [한 장 요약](portfolio-summary.md) 순서로 읽는다. 나머지 문서는 주제별로 나눴다.
 
 ## 설계
@@ -33,7 +35,7 @@
 
 ## Java 관리자 대시보드 연동
 
-대시보드는 별도 저장소 [zeek_ad_dashboard](https://github.com/prosild/zeek_ad_dashboard)에 있다.
+대시보드는 별도 저장소 [nbad-dashboard](https://github.com/prosild/nbad-dashboard)에 있다.
 
 | 문서 | 내용 |
 | --- | --- |
