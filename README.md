@@ -1,10 +1,12 @@
-# zeek_AD: Zeek 로그로 내부 자산의 행동 이상을 찾는 end-to-end 파이프라인
+# NBAD: Zeek 로그로 내부 자산의 행동 이상을 찾는 end-to-end 파이프라인
+
+NBAD는 Network Behavior Anomaly Detection(네트워크 행동 이상탐지)의 줄임말이다. 처음 이름은 `zeek_AD`였다.
 
 네트워크 센서(Zeek)의 로그만으로 내부 호스트의 평소와 다른 행동을 찾는다. 찾은 행동은 조사 큐에 올리고 근거·LLM 보고서·Slack 알림까지 자동으로 만든다. 공개 데이터(CIC-IDS-2017)로 모델을 만들고 평가한 뒤 격리된 VMware 실습망에서 실제 트래픽(Kali 공격 + 정상 배경)을 발생시켜 수집부터 알림까지 도는 것을 확인했다.
 
 목적은 성능 수치가 아니라 실제 트래픽이 들어와 조사 큐와 보고서가 나오기까지 전 과정을 만들고 단계마다 결과를 측정하는 것이다.
 
-![zeek_AD 구조](docs/figures/architecture.png)
+![NBAD 구조](docs/figures/architecture.png)
 
 ## 한눈에 보기
 
@@ -187,6 +189,8 @@ docker compose -f deploy/compose.yaml --env-file deploy/.env up -d && python scr
 
 ## 저장소 구조
 
+프로젝트와 저장소의 처음 이름은 `zeek_AD`였다. Python 패키지(`zeek_ad`), conda 환경(`zeek-ad`), DB 이름(`zeekad`), 운영 문서의 설치 경로(`~/zeek_AD`)는 이미 검증한 것을 다시 검증하지 않으려고 바꾸지 않았다. 운영 문서, 날짜가 붙은 작업 기록, 데이터 계약 문서에도 `zeek_AD`가 그대로 나온다.
+
 | 폴더 | 내용 |
 | --- | --- |
 | [zeek_ad/](zeek_ad/) | 라이브러리: 창·사건, 특징, 모델(기준선·Transformer·TGN), 결합, 배포 묶음, worker, 근거, LLM 입력·보고서·검증, RAG, LangGraph, Slack, 수집·리비전 |
@@ -204,7 +208,7 @@ docker compose -f deploy/compose.yaml --env-file deploy/.env up -d && python scr
 - [docs/design-discussion-log.md](docs/design-discussion-log.md): 설계 질문·이의와 판단 근거 70여 건. 설계를 바꾸지 않은 경우도 적었다.
 - [docs/stage-0-progress.md](docs/stage-0-progress.md) \~ [docs/stage-7-progress.md](docs/stage-7-progress.md): 단계별로 한 일, 실행 결과, 발견한 문제.
 - [docs/eda-design-evidence.md](docs/eda-design-evidence.md): EDA 측정과 그림.
-- [docs/data-contract-v2.md](docs/data-contract-v2.md): Java 대시보드([zeek_ad_dashboard](https://github.com/prosild/zeek_ad_dashboard))와의 데이터 계약.
+- [docs/data-contract-v2.md](docs/data-contract-v2.md): Java 대시보드([nbad-dashboard](https://github.com/prosild/nbad-dashboard))와의 데이터 계약.
 - [docs/README.md](docs/README.md), [scripts/README.md](scripts/README.md): 문서·스크립트 전체 안내.
 
 개발에는 AI 코딩 도구를 함께 썼다. 설계를 바꿀 때마다 결정 문서를 남기고 결과는 시험과 실제 실행으로 확인했다.
