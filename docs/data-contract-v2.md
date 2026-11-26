@@ -42,7 +42,7 @@ incident_queue (v1) ── 사건 하나 = (job_id, incident_id)
 | `zeekad_source_run` | text | 만든 실행(재현용). 예: `20261117T020850Z-eval`, `agent-graph.v1` |
 | `created_at` | timestamptz | 만든 시각 |
 | `zeekad_facts` | jsonb | 보고서를 쓸 때 LLM에 보낸 사실 목록 `[{id, name, value}]`. 가명·상대 초로 되어 있고 실제 IP는 없다 |
-| `zeekad_pseudonyms` | jsonb | 가명표 `{"H": "192.168.10.50", "I1": "...", "X1": "..."}`. **실제 IP다.** DB에만 있고 LLM에는 보내지 않았다 |
+| `zeekad_pseudonyms` | jsonb | 가명표 `{"H": "192.168.10.50", "I1": "...", "X1": "..."}`. **실제 IP다.** DB에만 있고 LLM에는 보내지 않았다. 보관 기간·삭제 정책은 없다(Q84). 화면에서는 권한 있는 역할에만 보이길 권한다 |
 
 `zeekad_report` 구조:
 
