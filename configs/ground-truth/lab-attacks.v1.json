@@ -1,0 +1,735 @@
+{
+  "config_id": "ground-truth.lab-attacks.v1",
+  "schema_version": 1,
+  "dataset": "lab (VMnet2 10.10.0.0/24, DD-015·DD-020)",
+  "recorded_at": "2026-11-26",
+  "frozen_before_scoring": false,
+  "frozen_note": "공격 실행과 채점(2026-11-19, 2026-11-22)이 끝난 뒤에 정리했다. 규칙은 생성기 명령과 생성기 로그, conn 5-튜플로만 썼고 점수·사건·알림은 보지 않았다.",
+  "source": "docs/stage-6-progress.md 스물둘째 작업; docs/stage-7-progress.md 열두째 작업; scripts/lab_*.sh; outputs/lab_eval/generator-logs/(타깃 VM 로그, 로컬 보관)",
+  "rule_semantics": "규칙 하나는 capture_id, orig_h 목록, resp_h 목록, ts가 [ts_start_utc, ts_end_utc) 안, resp_p 목록(있으면), proto(있으면)를 모두 만족하는 연결을 고른다. 시각은 연결 시작(ts)이다. 에피소드의 연결은 규칙들의 합집합이다. 키와 뜻은 cic17-episodes.v1과 같다. 여기서는 Zeek conn.log 행에 적용해 확인했다. 연결 식별은 수집 파일 폴더 + uid다(5분 파일마다 Zeek을 따로 돌려 uid가 파일 사이에서 겹친다).",
+  "evaluation_only": "이 조건은 평가 전용이다. 모델·LLM 입력이나 근거 검색 필터에 쓰지 않는다(설계 5.1).",
+  "nature": "종류마다 1~2회 실행한 정성적 프로브다(벤치마크가 아니다, 사용자 결정 2026-11-22). 비율이 아니라 종류별 탐지 여부와 걸린 시간을 보는 데 쓴다.",
+  "window_seconds": 300,
+  "hosts": {
+    "10.10.0.10": "배포 VM(센서)",
+    "10.10.0.20": "타깃 VM lab-target(SSH·HTTP·Samba·dnsmasq)",
+    "10.10.0.21": "타깃 VM의 IP 별칭",
+    "10.10.0.22": "타깃 VM의 IP 별칭",
+    "10.10.0.23": "타깃 VM의 IP 별칭",
+    "10.10.0.50": "Kali",
+    "10.10.0.60": "Kali의 IP 별칭(정상 배경용 HTTP 서버)",
+    "그 밖": "11-19의 배경 재생 주소(10.10.0.11·12·53, 10.10.0.100~112)는 outputs/lab_background/v1/manifest.json에 있다. 10.10.0.255와 224.0.0.x는 브로드캐스트·멀티캐스트라 자산이 아니다. 에피소드에서 각 주소가 맡은 역할은 roles에 적는다."
+  },
+  "episodes": [
+    {
+      "episode_id": "lab-ep-001",
+      "scenario": "fast_scan",
+      "run": 1,
+      "status": "confirmed",
+      "status_reason": "포트 1~1000에 연결 1000개(REJ 999, RSTO 1)가 1초 안에 몰렸다. 진행 기록의 03:45 칸과 맞는다",
+      "outcome": "unknown",
+      "roles": "10.10.0.50 = 스캔하는 쪽, 대상 = 스캔당하는 쪽",
+      "background": "없음(공격만)",
+      "generator": {
+        "host": "10.10.0.50",
+        "command": "nmap -sT -p 1-1000 10.10.0.10",
+        "script": "scripts/lab_scenario.sh (인자 없이 실행, 둘째 칸)",
+        "log": "Kali ~/scenario-*.log(가져오지 않음)"
+      },
+      "expected_units": [
+        {
+          "asset": "10.10.0.50",
+          "role": "originator"
+        },
+        {
+          "asset": "10.10.0.10",
+          "role": "responder"
+        }
+      ],
+      "observed": {
+        "connections": 1000,
+        "first_ts_utc": "2026-11-19T03:45:05Z",
+        "last_ts_utc": "2026-11-19T03:45:05Z",
+        "windows_utc": [
+          "03:45"
+        ],
+        "connections_per_window": {
+          "03:45": 1000
+        }
+      },
+      "rules": [
+        {
+          "capture_id": "lab-20261119",
+          "orig_h": [
+            "10.10.0.50"
+          ],
+          "resp_h": [
+            "10.10.0.10"
+          ],
+          "ts_start_utc": "2026-11-19T03:45:00Z",
+          "ts_end_utc": "2026-11-19T03:50:00Z",
+          "proto": "tcp"
+        }
+      ]
+    },
+    {
+      "episode_id": "lab-ep-002",
+      "scenario": "service_scan",
+      "run": 1,
+      "status": "confirmed",
+      "status_reason": "포트 168개에 연결 169개. 진행 기록의 03:50 칸(연결 169)과 맞는다",
+      "outcome": "unknown",
+      "roles": "10.10.0.50 = 스캔하는 쪽, 대상 = 스캔당하는 쪽",
+      "background": "없음(공격만)",
+      "generator": {
+        "host": "10.10.0.50",
+        "command": "nmap -sV -p 1-200 10.10.0.10",
+        "script": "scripts/lab_scenario.sh (인자 없이 실행, 셋째 칸)",
+        "log": "Kali ~/scenario-*.log(가져오지 않음)"
+      },
+      "expected_units": [
+        {
+          "asset": "10.10.0.50",
+          "role": "originator"
+        },
+        {
+          "asset": "10.10.0.10",
+          "role": "responder"
+        }
+      ],
+      "observed": {
+        "connections": 169,
+        "first_ts_utc": "2026-11-19T03:50:06Z",
+        "last_ts_utc": "2026-11-19T03:50:06Z",
+        "windows_utc": [
+          "03:50"
+        ],
+        "connections_per_window": {
+          "03:50": 169
+        }
+      },
+      "rules": [
+        {
+          "capture_id": "lab-20261119",
+          "orig_h": [
+            "10.10.0.50"
+          ],
+          "resp_h": [
+            "10.10.0.10"
+          ],
+          "ts_start_utc": "2026-11-19T03:50:00Z",
+          "ts_end_utc": "2026-11-19T03:55:00Z",
+          "proto": "tcp"
+        }
+      ]
+    },
+    {
+      "episode_id": "lab-ep-003",
+      "scenario": "fast_scan",
+      "run": 2,
+      "status": "confirmed",
+      "status_reason": "같은 명령인데 conn에는 포트 520개만 남았다(실행 1은 1000개). 배경 재생과 겹친 구간이다. 원인은 확인하지 않았다",
+      "outcome": "unknown",
+      "roles": "10.10.0.50 = 스캔하는 쪽, 대상 = 스캔당하는 쪽",
+      "background": "월요일 재생 + 합성 정상(DD-017, 04:15:00~04:50:36)",
+      "generator": {
+        "host": "10.10.0.50",
+        "command": "nmap -sT -p 1-1000 10.10.0.10",
+        "script": "scripts/lab_scenario.sh (bash lab_scenario.sh 04:25, 둘째 칸)",
+        "log": "Kali ~/scenario-*.log(가져오지 않음)"
+      },
+      "expected_units": [
+        {
+          "asset": "10.10.0.50",
+          "role": "originator"
+        },
+        {
+          "asset": "10.10.0.10",
+          "role": "responder"
+        }
+      ],
+      "observed": {
+        "connections": 520,
+        "first_ts_utc": "2026-11-19T04:30:05Z",
+        "last_ts_utc": "2026-11-19T04:30:05Z",
+        "windows_utc": [
+          "04:30"
+        ],
+        "connections_per_window": {
+          "04:30": 520
+        }
+      },
+      "rules": [
+        {
+          "capture_id": "lab-20261119",
+          "orig_h": [
+            "10.10.0.50"
+          ],
+          "resp_h": [
+            "10.10.0.10"
+          ],
+          "ts_start_utc": "2026-11-19T04:30:00Z",
+          "ts_end_utc": "2026-11-19T04:35:00Z",
+          "proto": "tcp"
+        }
+      ]
+    },
+    {
+      "episode_id": "lab-ep-004",
+      "scenario": "service_scan",
+      "run": 2,
+      "status": "confirmed",
+      "status_reason": "포트 116개에 연결 117개(실행 1은 169개). 배경 재생과 겹친 구간이다",
+      "outcome": "unknown",
+      "roles": "10.10.0.50 = 스캔하는 쪽, 대상 = 스캔당하는 쪽",
+      "background": "월요일 재생 + 합성 정상(DD-017, 04:15:00~04:50:36)",
+      "generator": {
+        "host": "10.10.0.50",
+        "command": "nmap -sV -p 1-200 10.10.0.10",
+        "script": "scripts/lab_scenario.sh (bash lab_scenario.sh 04:25, 셋째 칸)",
+        "log": "Kali ~/scenario-*.log(가져오지 않음)"
+      },
+      "expected_units": [
+        {
+          "asset": "10.10.0.50",
+          "role": "originator"
+        },
+        {
+          "asset": "10.10.0.10",
+          "role": "responder"
+        }
+      ],
+      "observed": {
+        "connections": 117,
+        "first_ts_utc": "2026-11-19T04:35:06Z",
+        "last_ts_utc": "2026-11-19T04:35:06Z",
+        "windows_utc": [
+          "04:35"
+        ],
+        "connections_per_window": {
+          "04:35": 117
+        }
+      },
+      "rules": [
+        {
+          "capture_id": "lab-20261119",
+          "orig_h": [
+            "10.10.0.50"
+          ],
+          "resp_h": [
+            "10.10.0.10"
+          ],
+          "ts_start_utc": "2026-11-19T04:35:00Z",
+          "ts_end_utc": "2026-11-19T04:40:00Z",
+          "proto": "tcp"
+        }
+      ]
+    },
+    {
+      "episode_id": "lab-ep-005",
+      "scenario": "beaconing",
+      "run": 1,
+      "status": "confirmed",
+      "status_reason": "연결 16개(모두 SF)가 생성기 로그의 beat 16번과 하나씩 맞는다. 수신기가 꺼져 있던 첫 실행(14:03:52·14:04:49, 거절 2번)은 other_activity의 failed_attempt로 뺐다(진행 기록도 이 시험을 14:06부터로 적었다)",
+      "outcome": "succeeded",
+      "roles": "10.10.0.20 = 침해된 내부 호스트(연결을 거는 쪽), 10.10.0.50 = C2 수신기",
+      "background": "없음(공격만)",
+      "generator": {
+        "host": "10.10.0.20",
+        "command": "bash lab_beacon.sh 10.10.0.50 4444 60 0.2 900",
+        "script": "scripts/lab_beacon.sh",
+        "log": "outputs/lab_eval/generator-logs/lab-target/beacon-20261122T140616Z.log",
+        "log_start_utc": "2026-11-22T14:06:16Z",
+        "log_end_utc": "2026-11-22T14:21:36Z"
+      },
+      "expected_units": [
+        {
+          "asset": "10.10.0.20",
+          "role": "originator"
+        },
+        {
+          "asset": "10.10.0.50",
+          "role": "responder"
+        }
+      ],
+      "observed": {
+        "connections": 16,
+        "first_ts_utc": "2026-11-22T14:06:16Z",
+        "last_ts_utc": "2026-11-22T14:20:34Z",
+        "windows_utc": [
+          "14:05",
+          "14:10",
+          "14:15",
+          "14:20"
+        ],
+        "connections_per_window": {
+          "14:05": 4,
+          "14:10": 5,
+          "14:15": 6,
+          "14:20": 1
+        }
+      },
+      "rules": [
+        {
+          "capture_id": "lab-20261122",
+          "orig_h": [
+            "10.10.0.20"
+          ],
+          "resp_h": [
+            "10.10.0.50"
+          ],
+          "ts_start_utc": "2026-11-22T14:06:00Z",
+          "ts_end_utc": "2026-11-22T14:22:00Z",
+          "resp_p": [
+            4444
+          ],
+          "proto": "tcp"
+        }
+      ]
+    },
+    {
+      "episode_id": "lab-ep-006",
+      "scenario": "beaconing",
+      "run": 2,
+      "status": "confirmed",
+      "status_reason": "연결 16개(모두 SF)가 생성기 로그의 beat 16번과 하나씩 맞는다",
+      "outcome": "succeeded",
+      "roles": "10.10.0.20 = 침해된 내부 호스트(연결을 거는 쪽), 10.10.0.50 = C2 수신기",
+      "background": "타깃 정상 배경(lab_normal_client.sh, 14:55:23~15:25:24, 10.10.0.20 → 10.10.0.60)",
+      "generator": {
+        "host": "10.10.0.20",
+        "command": "bash lab_beacon.sh 10.10.0.50 4444 60 0.2 900",
+        "script": "scripts/lab_beacon.sh",
+        "log": "outputs/lab_eval/generator-logs/lab-target/beacon-20261122T151023Z.log",
+        "log_start_utc": "2026-11-22T15:10:23Z",
+        "log_end_utc": "2026-11-22T15:25:35Z"
+      },
+      "expected_units": [
+        {
+          "asset": "10.10.0.20",
+          "role": "originator"
+        },
+        {
+          "asset": "10.10.0.50",
+          "role": "responder"
+        }
+      ],
+      "observed": {
+        "connections": 16,
+        "first_ts_utc": "2026-11-22T15:10:23Z",
+        "last_ts_utc": "2026-11-22T15:24:35Z",
+        "windows_utc": [
+          "15:10",
+          "15:15",
+          "15:20"
+        ],
+        "connections_per_window": {
+          "15:10": 6,
+          "15:15": 5,
+          "15:20": 5
+        }
+      },
+      "rules": [
+        {
+          "capture_id": "lab-20261122",
+          "orig_h": [
+            "10.10.0.20"
+          ],
+          "resp_h": [
+            "10.10.0.50"
+          ],
+          "ts_start_utc": "2026-11-22T15:10:00Z",
+          "ts_end_utc": "2026-11-22T15:26:00Z",
+          "resp_p": [
+            4444
+          ],
+          "proto": "tcp"
+        }
+      ]
+    },
+    {
+      "episode_id": "lab-ep-007",
+      "scenario": "slow_scan",
+      "run": 1,
+      "status": "confirmed",
+      "status_reason": "포트 200개에 연결 219개(REJ 216, RSTO 3). 143번 포트만 20번 되풀이됐다. 진행 기록의 15:40~약 15:57과 맞는다",
+      "outcome": "unknown",
+      "roles": "10.10.0.50 = 스캔하는 쪽, 10.10.0.20 = 스캔당하는 쪽",
+      "background": "없음(공격만)",
+      "generator": {
+        "host": "10.10.0.50",
+        "command": "nmap -sT -Pn -n -p 1-200 --scan-delay 5s 10.10.0.20",
+        "script": null,
+        "log": "없음(명령을 직접 실행)"
+      },
+      "expected_units": [
+        {
+          "asset": "10.10.0.50",
+          "role": "originator"
+        },
+        {
+          "asset": "10.10.0.20",
+          "role": "responder"
+        }
+      ],
+      "observed": {
+        "connections": 219,
+        "first_ts_utc": "2026-11-22T15:40:24Z",
+        "last_ts_utc": "2026-11-22T15:58:34Z",
+        "windows_utc": [
+          "15:40",
+          "15:45",
+          "15:50",
+          "15:55"
+        ],
+        "connections_per_window": {
+          "15:40": 56,
+          "15:45": 60,
+          "15:50": 60,
+          "15:55": 43
+        }
+      },
+      "rules": [
+        {
+          "capture_id": "lab-20261122",
+          "orig_h": [
+            "10.10.0.50"
+          ],
+          "resp_h": [
+            "10.10.0.20"
+          ],
+          "ts_start_utc": "2026-11-22T15:40:00Z",
+          "ts_end_utc": "2026-11-22T16:00:00Z",
+          "proto": "tcp"
+        }
+      ]
+    },
+    {
+      "episode_id": "lab-ep-008",
+      "scenario": "slow_exfil",
+      "run": 1,
+      "status": "confirmed",
+      "status_reason": "업로드 3번, 각 4,194,304바이트, 약 48초(SF). 생성기 로그의 upload 3번과 맞는다. 시작 6초 전(16:01:14)의 0바이트 연결은 수신기 확인이라 뺐다(규칙 시작이 생성기 시작 시각이다)",
+      "outcome": "succeeded",
+      "roles": "10.10.0.20 = 침해된 내부 호스트(올리는 쪽), 10.10.0.50 = C2 수신기",
+      "background": "없음(공격만)",
+      "generator": {
+        "host": "10.10.0.20",
+        "command": "bash lab_exfil.sh 10.10.0.50 4445 300 4 900",
+        "script": "scripts/lab_exfil.sh",
+        "log": "outputs/lab_eval/generator-logs/lab-target/exfil-20261122T160120Z.log",
+        "log_start_utc": "2026-11-22T16:01:20Z",
+        "log_end_utc": "2026-11-22T16:16:20Z"
+      },
+      "expected_units": [
+        {
+          "asset": "10.10.0.20",
+          "role": "originator"
+        },
+        {
+          "asset": "10.10.0.50",
+          "role": "responder"
+        }
+      ],
+      "observed": {
+        "connections": 3,
+        "first_ts_utc": "2026-11-22T16:01:20Z",
+        "last_ts_utc": "2026-11-22T16:11:20Z",
+        "windows_utc": [
+          "16:00",
+          "16:05",
+          "16:10"
+        ],
+        "connections_per_window": {
+          "16:00": 1,
+          "16:05": 1,
+          "16:10": 1
+        }
+      },
+      "rules": [
+        {
+          "capture_id": "lab-20261122",
+          "orig_h": [
+            "10.10.0.20"
+          ],
+          "resp_h": [
+            "10.10.0.50"
+          ],
+          "ts_start_utc": "2026-11-22T16:01:20Z",
+          "ts_end_utc": "2026-11-22T16:17:00Z",
+          "resp_p": [
+            4445
+          ],
+          "proto": "tcp"
+        }
+      ]
+    },
+    {
+      "episode_id": "lab-ep-009",
+      "scenario": "lateral_movement",
+      "run": 1,
+      "status": "confirmed",
+      "status_reason": "호스트 4대에 각 20개(445·139 각 10개, 모두 SF), 약 60초마다 한 바퀴씩 10바퀴. 명령 인자는 conn의 바퀴 수·간격에서 되짚은 것이다",
+      "outcome": "unknown",
+      "roles": "10.10.0.50 = pivot(퍼지는 쪽), 10.10.0.20~23 = 접속당하는 내부 호스트",
+      "background": "없음(공격만)",
+      "generator": {
+        "host": "10.10.0.50",
+        "command": "bash lab_lateral.sh 10 60 10.10.0.20 10.10.0.21 10.10.0.22 10.10.0.23",
+        "script": "scripts/lab_lateral.sh",
+        "log": "Kali ~/lateral-*.log(가져오지 않음)"
+      },
+      "expected_units": [
+        {
+          "asset": "10.10.0.50",
+          "role": "originator"
+        },
+        {
+          "asset": "10.10.0.20",
+          "role": "responder"
+        },
+        {
+          "asset": "10.10.0.21",
+          "role": "responder"
+        },
+        {
+          "asset": "10.10.0.22",
+          "role": "responder"
+        },
+        {
+          "asset": "10.10.0.23",
+          "role": "responder"
+        }
+      ],
+      "observed": {
+        "connections": 80,
+        "first_ts_utc": "2026-11-22T16:28:43Z",
+        "last_ts_utc": "2026-11-22T16:37:48Z",
+        "windows_utc": [
+          "16:25",
+          "16:30",
+          "16:35"
+        ],
+        "connections_per_window": {
+          "16:25": 16,
+          "16:30": 40,
+          "16:35": 24
+        }
+      },
+      "rules": [
+        {
+          "capture_id": "lab-20261122",
+          "orig_h": [
+            "10.10.0.50"
+          ],
+          "resp_h": [
+            "10.10.0.20",
+            "10.10.0.21",
+            "10.10.0.22",
+            "10.10.0.23"
+          ],
+          "ts_start_utc": "2026-11-22T16:28:00Z",
+          "ts_end_utc": "2026-11-22T16:39:00Z",
+          "resp_p": [
+            139,
+            445
+          ],
+          "proto": "tcp"
+        }
+      ]
+    },
+    {
+      "episode_id": "lab-ep-010",
+      "scenario": "ssh_bruteforce",
+      "run": 1,
+      "status": "confirmed",
+      "status_reason": "22번 포트에 연결 300개(모두 SF)가 25초 안에 몰렸다. BatchMode라 비밀번호 시도는 없다",
+      "outcome": "unknown",
+      "roles": "10.10.0.50 = 공격자, 10.10.0.20 = SSH 서버",
+      "background": "없음(공격만)",
+      "generator": {
+        "host": "10.10.0.50",
+        "command": "bash lab_bruteforce.sh 10.10.0.20 300",
+        "script": "scripts/lab_bruteforce.sh",
+        "log": "Kali ~/brute-*.log(가져오지 않음)"
+      },
+      "expected_units": [
+        {
+          "asset": "10.10.0.50",
+          "role": "originator"
+        },
+        {
+          "asset": "10.10.0.20",
+          "role": "responder"
+        }
+      ],
+      "observed": {
+        "connections": 300,
+        "first_ts_utc": "2026-11-22T16:41:54Z",
+        "last_ts_utc": "2026-11-22T16:42:19Z",
+        "windows_utc": [
+          "16:40"
+        ],
+        "connections_per_window": {
+          "16:40": 300
+        }
+      },
+      "rules": [
+        {
+          "capture_id": "lab-20261122",
+          "orig_h": [
+            "10.10.0.50"
+          ],
+          "resp_h": [
+            "10.10.0.20"
+          ],
+          "ts_start_utc": "2026-11-22T16:41:00Z",
+          "ts_end_utc": "2026-11-22T16:43:00Z",
+          "resp_p": [
+            22
+          ],
+          "proto": "tcp"
+        }
+      ]
+    },
+    {
+      "episode_id": "lab-ep-011",
+      "scenario": "dns_tunnel",
+      "run": 1,
+      "status": "confirmed",
+      "status_reason": "53/udp 질의 200개(모두 SF). 진행 기록은 17:00·17:05 창만 적었는데 첫 질의는 16:58:15로 16:55 창에 걸친다",
+      "outcome": "unknown",
+      "roles": "10.10.0.50 = 질의자(침해 호스트 역할), 10.10.0.20 = DNS 서버(C2 역할)",
+      "background": "없음(공격만)",
+      "generator": {
+        "host": "10.10.0.50",
+        "command": "bash lab_dns_tunnel.sh 10.10.0.20 tunnel.example 200 2",
+        "script": "scripts/lab_dns_tunnel.sh",
+        "log": "Kali ~/dnstunnel-*.log(가져오지 않음)"
+      },
+      "expected_units": [
+        {
+          "asset": "10.10.0.50",
+          "role": "originator"
+        },
+        {
+          "asset": "10.10.0.20",
+          "role": "responder"
+        }
+      ],
+      "observed": {
+        "connections": 200,
+        "first_ts_utc": "2026-11-22T16:58:15Z",
+        "last_ts_utc": "2026-11-22T17:05:47Z",
+        "windows_utc": [
+          "16:55",
+          "17:00",
+          "17:05"
+        ],
+        "connections_per_window": {
+          "16:55": 29,
+          "17:00": 142,
+          "17:05": 29
+        }
+      },
+      "rules": [
+        {
+          "capture_id": "lab-20261122",
+          "orig_h": [
+            "10.10.0.50"
+          ],
+          "resp_h": [
+            "10.10.0.20"
+          ],
+          "ts_start_utc": "2026-11-22T16:58:00Z",
+          "ts_end_utc": "2026-11-22T17:06:00Z",
+          "resp_p": [
+            53
+          ],
+          "proto": "udp"
+        }
+      ]
+    }
+  ],
+  "window_basis": "observed의 창은 파이프라인과 같이 연결 기록 시각(_write_ts)을 300초로 내림해 정한다(설계 3.2). 날짜는 캡처의 날짜(UTC)다. 11개 모두 연결 시작(ts)으로 정한 창 집합과 같았고 창별 연결 수만 조금 다르다.",
+  "timing_basis": "탐지까지 걸린 시간의 시작점은 observed.first_ts_utc(첫 공격 연결의 시작 시각, 초 아래 버림)다.",
+  "other_activity_note": "에피소드가 아닌 활동이다. 공격이 없는 창의 사건·알림을 셀 때 무엇이 있었는지 알려 준다. kind: check(연결 확인), background(정상 배경), failed_attempt(실패한 생성기 실행), broadcast. failed_attempt는 공격 생성기가 만든 트래픽이라 당사자 단위(units)의 그 창(windows_utc, 기록 시각 기준)을 '평소 창' 비교에서 뺀다.",
+  "other_activity": [
+    {
+      "capture_id": "lab-20261119",
+      "kind": "check",
+      "what": "연결 확인 ping 1건",
+      "when_utc": "03:28:01",
+      "flow": "10.10.0.50 → 10.10.0.10 icmp"
+    },
+    {
+      "capture_id": "lab-20261119",
+      "kind": "check",
+      "what": "ping 20회(lab_scenario.sh 첫째 칸)",
+      "when_utc": "03:40:05, 04:25:05",
+      "flow": "10.10.0.50 → 10.10.0.10 icmp"
+    },
+    {
+      "capture_id": "lab-20261119",
+      "kind": "background",
+      "what": "정상 배경 재생 시험 10초분(연결 226개, 진행 기록은 해석에서 뺐다)",
+      "when_utc": "04:00:01~04:00:10",
+      "flow": "outputs/lab_background/v1/manifest.json의 그룹 A"
+    },
+    {
+      "capture_id": "lab-20261119",
+      "kind": "background",
+      "what": "정상 배경 재생(DD-017)",
+      "when_utc": "04:15:00~04:50:36",
+      "flow": "outputs/lab_background/v1/manifest.json의 그룹 A·B"
+    },
+    {
+      "capture_id": "lab-20261122",
+      "kind": "check",
+      "what": "연결 확인(ping 2건, curl 1건, 포트 확인 3건)",
+      "when_utc": "13:38:04, 13:41:31, 13:41:39, 13:58:56",
+      "flow": "10.10.0.20 → 10.10.0.10 icmp, 10.10.0.50 → 10.10.0.20 icmp·tcp 8080·22·80·445"
+    },
+    {
+      "capture_id": "lab-20261122",
+      "kind": "failed_attempt",
+      "what": "비커닝 첫 실행. Kali 수신기가 꺼져 있어 2번 모두 거절(REJ). 생성기 로그 beacon-20261122T140352Z.log",
+      "when_utc": "14:03:52, 14:04:49",
+      "flow": "10.10.0.20 → 10.10.0.50 tcp 4444",
+      "units": [
+        {
+          "asset": "10.10.0.20",
+          "role": "originator"
+        },
+        {
+          "asset": "10.10.0.50",
+          "role": "responder"
+        }
+      ],
+      "windows_utc": [
+        "14:00"
+      ]
+    },
+    {
+      "capture_id": "lab-20261122",
+      "kind": "background",
+      "what": "타깃 정상 배경(lab_normal_client.sh) 2회, 요청 96건과 191건",
+      "when_utc": "14:33:32~14:48:33, 14:55:23~15:25:24",
+      "flow": "10.10.0.20 → 10.10.0.60 tcp 8000·8080·8888"
+    },
+    {
+      "capture_id": "lab-20261122",
+      "kind": "check",
+      "what": "수신기·서버 확인용 0바이트 연결 5개",
+      "when_utc": "14:55:04(4개), 16:01:14(1개)",
+      "flow": "10.10.0.20 → 10.10.0.50 tcp 4444·4445, 10.10.0.20 → 10.10.0.60 tcp 8000·8080·8888"
+    },
+    {
+      "capture_id": "lab-20261122",
+      "kind": "broadcast",
+      "what": "NetBIOS 브로드캐스트. 생성기가 보낸 것이 아니다(타깃 VM의 Samba로 추정, conn만으로는 확인하지 않았다)",
+      "when_utc": "10.10.0.20은 13:50:11~23:59:14(138 56건, 137 3건), 10.10.0.21~23은 16:23:23~18:16:46(138 각 15건)",
+      "flow": "10.10.0.20~23 → 10.10.0.255 udp 137·138"
+    }
+  ]
+}

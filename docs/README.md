@@ -22,6 +22,7 @@
 | [eda-design-evidence.md](eda-design-evidence.md) | EDA 결과와 설계 근거(그림 [figures/eda/](figures/eda/)) |
 | [feature-dictionary-v1.md](feature-dictionary-v1.md), [feature-dictionary-v2.md](feature-dictionary-v2.md) | 특징 사전(v1 conn 18개, v2는 프로토콜 로그 24개를 더한 42개) |
 | [ground-truth-v1.md](ground-truth-v1.md) | 정답 에피소드를 만든 방법과 목록(평가 전용) |
+| [lab-attack-detection.md](lab-attack-detection.md) | 실습망 Kali 공격 8종(11회)을 종류별로 잡았는지와 첫 알림까지 걸린 시간, 판정 기준 |
 
 ## 운영
 
@@ -43,6 +44,7 @@
 | [dashboard-handoff-2026-11-19.md](dashboard-handoff-2026-11-19.md) | 2026-11-18\~19 변경 사항 전달 |
 | [dashboard-handoff-2026-11-21.md](dashboard-handoff-2026-11-21.md) | 2026-11-21 변경 사항 전달(모델·수집 구간 표시 이름, LLM 요청 모델) |
 | [dashboard-handoff-2026-11-23.md](dashboard-handoff-2026-11-23.md) | 2026-11-23 Slack 스레드 열 질문 회신(도입 전 기록의 null, 새 캡처 표시) |
+| [dashboard-handoff-2026-11-26.md](dashboard-handoff-2026-11-26.md) | 2026-11-26 외부 피드백 회신(Kali 공격 정답 기록, 탐지 여부·걸린 시간 표, 정탐 예시 사건) |
 
 ## 진행 기록
 

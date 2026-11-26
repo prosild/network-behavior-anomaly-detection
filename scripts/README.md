@@ -36,6 +36,8 @@ PCAP → Zeek → Silver → Gold → 그래프 순서로 만든다.
 | [build_nat_diagnostic.py](build_nat_diagnostic.py), [build_new_peer_baseline.py](build_new_peer_baseline.py), [build_first_seen.py](build_first_seen.py), [run_detector.py](run_detector.py) | 진단용 자명한 기준선·행동 탐지기(DD-006) |
 | [diagnose_long_connections.py](diagnose_long_connections.py) | 긴 연결이 상위 점수 창을 차지하는지 진단 |
 | [summarize_eval.py](summarize_eval.py) | 모델별 Recall@N과 bootstrap 95% 구간 표 |
+| [check_lab_truth.py](check_lab_truth.py) | 실습망 정답 설정(lab-attacks.v1)의 관측값이 로컬 conn 로그에 규칙을 적용한 결과와 같은지 확인(평가 전용) |
+| [build_lab_detection.py](build_lab_detection.py) | VM DB 내보내기로 실습망 공격 종류별 탐지 여부·걸린 시간 표(`detection.json`·`detection.md`, 비율은 내지 않음) |
 
 ## 3. 저장·배포·MLOps (단계 4·7)
 
