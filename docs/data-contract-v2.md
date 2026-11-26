@@ -216,6 +216,7 @@ SELECT dashboard.reopen_incident(
 | `zeekad_status`, `zeekad_resolution`, `status_updated_at` | | 사건 ID 기준 상태 |
 | `zeekad_review_action`, `zeekad_review_pending` | | 분석가 검토 결정, 결정 전이면 pending이 true |
 
+- 성능(2026-11-27, migration 019): 이 뷰는 사건 행마다 그 사건의 가장 최근 보고서를 찾는다. 이를 위한 인덱스 `zeekad.agent_report_incident_job_idx`(`incident_id`, `job_id DESC`)가 있다. 뷰와 결과는 그대로다. 공개용 DB 사본에 인덱스를 따로 넣는다면 같은 이름에 `IF NOT EXISTS`를 쓰면 019가 적용된 스냅샷에서 겹치지 않는다(Q87).
 - `queue_rank`의 동점: 점수가 같은 사건끼리의 순서는 그 작업 입력의 해시로 정한다. 실습망 캡처는 파일이 늘 때마다 해시가 바뀌어 동점 사건끼리 자리가 작업마다 바뀔 수 있다(사건 ID와 점수는 그대로, Q86). 순위 숫자를 사건의 고유 값으로 쓰지 않는다. 화면에서 "N위"를 고정된 사실처럼 문서·예시에 박지 않는다.
 - 결합 v2(2026-11-19, [DD-018](design-decisions/DD-018-fusion-merge-overlaps.md))부터 사건 창(`incident_window`)은 처음 뽑은 모델의 창이 아니라 겹쳐 꼽은 모든 모델 창의 합이다. 표·뷰 구조는 같다. 어느 결합 버전으로 만든 작업인지는 작업의 `bundle_id`로 안다.
 - 사건 상세 화면의 모델 점수(`incident_model_scores`)와 근거 API는 큐에 나온 `job_id`(최신 작업)를 쓴다. 근거는 최신 작업 기준이라 사건이 길어졌으면 보고서보다 연결 수가 많을 수 있다.
