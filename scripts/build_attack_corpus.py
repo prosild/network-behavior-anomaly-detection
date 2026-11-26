@@ -3,15 +3,17 @@
 1. 사용자 RAG 실습 DB(attack_rag.attack_documents)에서 technique 706행을 읽어 스냅샷으로 저장한다.
    비밀번호는 PGPASSWORD 환경 변수로 받는다(실습 DB 계정, 코드에 넣지 않는다).
 2. ATT&CK STIX 원본(Enterprise 20.1)을 outputs/rag/에 복사하고 버전·해시를 확인한다.
+   원본은 저장소에 없다. 위치는 --stix 인자나 ATTACK_STIX 환경 변수로 준다.
 3. 탐지 절을 다시 만든다: 기법 ← detects ← detection strategy → analytic → 로그 소스(데이터 구성 요소).
    실습 파서는 v18에서 없어진 x_mitre_detection 필드를 읽어 706건 모두 비어 있었다.
 4. 실습 본문의 빈 탐지 절을 새 탐지 절로 바꿔 한 트랜잭션으로 넣는다(전부 지우고 다시).
-예: PGPASSWORD=postgres python scripts/build_attack_corpus.py
+예: PGPASSWORD=postgres python scripts/build_attack_corpus.py --stix <enterprise-attack.json 경로>
 """
 
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import sys
@@ -24,7 +26,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from zeek_ad.db import connect  # noqa: E402
 from zeek_ad.provenance import project_path, sha256  # noqa: E402
 
-PRACTICE_STIX = Path("/mnt/c/Users/pgils/src/RAG_pratice/enterprise-attack.json")
+STIX_ENV = os.environ.get("ATTACK_STIX")
 OUT = PROJECT_ROOT / "outputs" / "rag" / "attack_v20.1"
 ATTACK_VERSION = "20.1"
 EMPTY_DETECTION = "## Detection\nNo detection guidance available."
@@ -69,8 +71,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--practice-host", default="127.0.0.1")
     parser.add_argument("--practice-port", type=int, default=5432)
-    parser.add_argument("--stix", type=Path, default=PRACTICE_STIX)
+    parser.add_argument("--stix", type=Path, default=STIX_ENV, required=not STIX_ENV,
+                        help="ATT&CK STIX 원본(enterprise-attack.json) 경로. 없으면 ATTACK_STIX 환경 변수를 쓴다")
     args = parser.parse_args()
+    if not args.stix.is_file():
+        parser.error(f"STIX 원본 파일이 없다: {args.stix}")
     OUT.mkdir(parents=True, exist_ok=True)
 
     # 1. 실습 DB 스냅샷(읽기만 한다).

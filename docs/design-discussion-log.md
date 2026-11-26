@@ -438,7 +438,7 @@
 ## 2026-11-12 (단계 4 진행 중)
 
 ### Q37. RAG 연습으로 만든 ATT&CK pgvector DB와 다른 AI의 연동 프롬프트를 이 프로젝트에 쓸 수 있나
-- **배경:** 사용자가 RAG 연습 프로젝트(`C:\Users\pgils\src\RAG_pratice`)에서 ATT&CK 기법 706건을 Gemini `gemini-embedding-001`(768차원)로 임베딩해 별도 컨테이너(`attack-rag-postgres`, DB `attack_rag`)에 넣었다. 다른 AI가 이를 세 탐지 모델 결과와 묶는 연동 프롬프트를 줬다.
+- **배경:** 사용자가 RAG 연습 프로젝트(별도 로컬 폴더)에서 ATT&CK 기법 706건을 Gemini `gemini-embedding-001`(768차원)로 임베딩해 별도 컨테이너(`attack-rag-postgres`, DB `attack_rag`)에 넣었다. 다른 AI가 이를 세 탐지 모델 결과와 묶는 연동 프롬프트를 줬다.
 - **Claude 확인(읽기만):** 문서 709행(technique 706 + 연습용 sample 3, 예: "Chocolate Cake Recipe"), 임베딩 709개, HNSW 코사인 인덱스. 원본은 Enterprise ATT&CK 20.1(2026-11-05). 본문에 설명·완화책·사용 그룹이 들어 있다.
 - **쓸 수 있는 것:** DD-002 2절의 문서 선택(ATT&CK)과 pgvector가 같다. 파싱·역정규화 작업을 재사용할 수 있다.
 - **바로잡을 것:**
