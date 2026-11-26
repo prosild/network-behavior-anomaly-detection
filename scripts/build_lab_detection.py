@@ -42,6 +42,8 @@ DEFINITIONS = {
     "absorbed_into_episodes": "흡수된 사건의 알림 행이 같은 단위의 다른 에피소드에서 공격 창 알림이면 그 episode_id",
     "shared_alert": "같은 알림 행(job_id, incident_id, created_at)이 둘 이상의 에피소드에서 단위의 첫 알림이면 shared_with_episodes에 서로를 남긴다",
     "failed_attempt": "other_activity의 kind = failed_attempt 항목의 units·windows_utc 창은 평소 창에서 뺀다(공격 창도 아니다). 뺀 수는 failed_attempt_windows_excluded",
+    "non_host_only": "큐 자격 규칙(configs/worker/queue-eligibility.v1.json)이 적용된 작업에서 split = non_host_only인 창은 평소 창이 아니다. "
+                     "평소 창 = 큐에 오를 수 있는 공격 없는 창이라는 뜻이다. 공격·실패한 시도 창이 아닌데 이 라벨로 빠진 수는 non_host_only_windows_excluded",
     "table_latency": "표 1의 걸린 시간은 detected일 때만 숫자, indistinct는 괄호 안 참고. JSON에는 판정과 상관없이 값을 남긴다",
     "table_distinct_models": "표 1의 구분된 모델은 detected일 때 판정을 만든 단위의 것(deciding_distinct_models)만. 나머지는 non_deciding_distinct",
     "verdict": "detected: 알림 있고 구분되는 모델이 있는 단위가 있음 > indistinct: 알림 있는 단위는 있으나 구분 안 됨 > "

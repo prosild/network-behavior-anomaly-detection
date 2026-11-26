@@ -401,6 +401,23 @@ class NormalWindowTest(unittest.TestCase):
         b = unit_of(run(t, episode("ep-1", ["10:05"]), other_activity=[failed]), B)
         self.assertEqual((b["normal_window_count"], b["failed_attempt_windows_excluded"]), (1, 0))
 
+    def test_non_host_only_window_is_not_normal(self):
+        # 큐 자격 규칙이 non_host_only로 뺀 창은 평소 창이 아니다(평소 최고 점수에도 들지 않는다). 뺀 수를 남긴다.
+        t = Tables()
+        t.score(A, "10:05", 5.0, True)
+        t.score(A, "10:00", 9.0, True, split="non_host_only")
+        t.score(A, "10:05", 7.0, True, model=M2, split="live")
+        t.normal(A, n=2, score=1.0)
+        u = unit_of(run(t, episode("ep-1", ["10:05"])), A)
+        self.assertEqual(u["normal_window_count"], 2)
+        self.assertEqual(u["non_host_only_windows_excluded"], 1)
+        self.assertEqual(u["models"][M1]["normal_max"], 1.0)
+        # 규칙이 없는 작업은 0이다
+        t2 = Tables()
+        t2.score(A, "10:05", 5.0, True)
+        t2.normal(A, n=2)
+        self.assertEqual(unit_of(run(t2, episode("ep-1", ["10:05"])), A)["non_host_only_windows_excluded"], 0)
+
 
 class AbsorbedTest(unittest.TestCase):
     def test_absorbed_per_incident_even_when_unit_has_attack_alert(self):

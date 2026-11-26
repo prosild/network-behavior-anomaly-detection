@@ -1,0 +1,31 @@
+{
+  "config_id": "queue-eligibility.v1",
+  "schema_version": 1,
+  "decided_at": "2026-11-26",
+  "rule": "originator 창에서 그 자산이 건 연결이 전부 호스트가 아닌 주소(브로드캐스트·멀티캐스트)로 갔고 그 연결 수가 max_connections 이하이면, 그 창은 점수를 남기되 조사 큐에서 뺀다. 연결이 하나도 없는 창은 해당하지 않는다. 호스트행 연결이 하나라도 있으면 해당하지 않는다. 연결 수가 상한을 넘으면 라벨 없이 지금처럼 모델 점수로 큐에 오른다(한 호스트가 브로드캐스트만 쏟아내는 폭주를 가리지 않으려는 것).",
+  "reason": "실습망 대상 VM의 Samba가 5분쯤마다 10.10.0.255:138/udp로 NetBIOS 브로드캐스트를 보낸다. 그 연결만 있는 보낸 쪽 창이 드문 창으로 꼽혀 사건·알림·LLM 보고서가 나갔다(억제 전 측정: 유휴 3일의 마지막 작업 사건 118·118·35건이 전부 이런 창뿐인 사건).",
+  "scope": "탐지기를 더하는 규칙이 아니라 큐에 오를 자격을 정하는 규칙이다. 모델·특징·묶음은 그대로이고, 캡처 첫·끝 창(split = capture_edge)을 큐에서 빼는 것과 같은 자리다. capture_edge 창은 라벨을 바꾸지 않는다.",
+  "label": "non_host_only",
+  "roles": [
+    "originator"
+  ],
+  "max_connections": 25,
+  "max_connections_source": {
+    "decided_at": "2026-11-26",
+    "rule": "학습 자료의 정상 창에서 본 최대를 상한으로 쓴다. 경계: 25개는 뺌, 26개는 빼지 않음",
+    "measured_on": "2026-11-26",
+    "data": "CIC 월요일(cic17-mon) Silver outputs/silver/conn_v1/conn의 orig_h·resp_h·write_ts, 자산 설정 configs/assets.cic-ids-2017.v1.json",
+    "windows": "점수화 대상 출발 주소의 originator 창(_write_ts 5분 창) 1,227개",
+    "measure": "창마다 호스트가 아닌 주소행 연결 수(호스트행 연결이 섞인 창도, 0인 창도 센다)",
+    "result": {"median": 1, "p99": 12, "max": 25, "non_host_only_windows": 0},
+    "reproduce": "python scripts/measure_queue_eligibility.py --baseline-silver outputs/silver/conn_v1/conn --baseline-assets configs/assets.cic-ids-2017.v1.json (zeek-ad 환경, pandas 필요)"
+  },
+  "window_basis": "연결의 _write_ts를 window_seconds(configs/time-windows.v1.json)로 내림한 창. Gold 창 배정과 같다(zeek_ad/role_windows.py).",
+  "non_host_addresses": {
+    "internal_network_address": true,
+    "internal_broadcast_address": true,
+    "limited_broadcast": "255.255.255.255",
+    "multicast": true,
+    "meaning": "제한 브로드캐스트, 멀티캐스트(IPv4 224.0.0.0/4, IPv6 ff00::/8), 그리고 내부 주소 가운데 어느 내부 대역(자산 설정 internal_networks)에든 속하면서 점수화 대상 자산이 아닌 것(zeek_ad/assets.py is_scored_asset이 거짓, 곧 모든 대역에서 네트워크·브로드캐스트 주소인 것). 내부 대역이 겹쳐도 자산 규칙과 어긋나지 않는다. 내부 대역 밖의 .255 같은 주소는 그 대역의 길이를 모르므로 호스트로 본다. 판정 코드는 zeek_ad/queue_eligibility.py is_non_host_address다."
+  }
+}

@@ -59,5 +59,5 @@ Zeek 로그만으로 내부 호스트의 평소와 다른 행동을 찾고 수�
 
 ## 7. 하지 않은 것
 - 실습망 데이터로 다시 학습하지 않았다. 정식 Structured Streaming 대신 파일 단위로 처리한다. Slack은 dry-run이다. 드리프트 감시와 새 환경 임계값 재설정은 없다.
-- 설계를 바꾼 결정 20건은 [설계 결정](design-decisions/)에, 설계 질문·이의와 판단 근거는 [설계 토론 기록](design-discussion-log.md)에, 단계마다 한 일과 실패한 것은 [진행 기록](README.md)에 남겼다. 개발에는 AI 코딩 도구를 함께 썼고 설계를 바꿀 때마다 결정 문서를 남겼다.
+- 설계를 바꾼 결정 21건은 [설계 결정](design-decisions/)에, 설계 질문·이의와 판단 근거는 [설계 토론 기록](design-discussion-log.md)에, 단계마다 한 일과 실패한 것은 [진행 기록](README.md)에 남겼다. 개발에는 AI 코딩 도구를 함께 썼고 설계를 바꿀 때마다 결정 문서를 남겼다.
 - 데이터: CIC-IDS-2017(UNB CIC, Sharafaldin 외 2018), 개선 라벨(Engelen 외 2021, Liu 외 2022).

@@ -17,6 +17,8 @@ from zeek_ad.lab_truth import (
 )
 
 VERDICTS = ("detected", "indistinct", "candidate_only", "missed")  # 앞일수록 좋은 판정
+# 큐 자격 규칙(zeek_ad/queue_eligibility.py)이 붙이는 라벨. 이 창은 평소 창(split = live)에 들지 않는다.
+NON_HOST_ONLY = "non_host_only"
 LABELS = {"detected": "잡힘", "indistinct": "구분 안 됨", "candidate_only": "후보만", "missed": "놓침"}
 # 이 시각 앞의 알림 행에는 스레드 정보가 없다(docs/data-contract-v2.md "스레드 두 열을 읽는 법").
 THREAD_INFO_SINCE = utc_epoch("2026-11-19T06:20:00Z")
@@ -150,6 +152,9 @@ def evaluate_unit(index, unit, capture, job_id, attack, attack_union, failed, t0
     live = {r["window"] for r in rows if r["split"] == "live"}
     normal_windows = live - not_normal
     failed_excluded = (live & failed) - attack_union
+    # 큐 자격 규칙이 적용된 작업에서 non_host_only라서 평소 창에서 빠진 창(공격 창·실패한 시도 창은 원래 평소 창이 아니라 세지 않는다).
+    # 평소 창 = 큐에 오를 수 있는 공격 없는 창이라는 뜻이다. 동작은 바꾸지 않고 수만 남긴다.
+    non_host_excluded = {r["window"] for r in rows if r["split"] == NON_HOST_ONLY} - not_normal
     distinct_models = [m for m, s in models.items() if s["distinct"]] if normal_windows else None
 
     queue = []
@@ -201,6 +206,7 @@ def evaluate_unit(index, unit, capture, job_id, attack, attack_union, failed, t0
         "asset": unit["asset"], "role": unit["role"],
         "normal_window_count": len(normal_windows),
         "failed_attempt_windows_excluded": len(failed_excluded),
+        "non_host_only_windows_excluded": len(non_host_excluded),
         "few_normal_windows": 0 < len(normal_windows) < FEW_NORMAL_WINDOWS,
         "models": models, "distinct_models": distinct_models,
         "queue": queue, "attack_alert_count": len(alerts),
@@ -425,6 +431,8 @@ def render_markdown(result, config, export_label):
         "- 평소와 구분 = 공격 창에서 후보였고 공격 창 최고 점수 > 평소 창 최고 점수. 평소 창은 그 단위의 공격 창 밖 live 창이고 "
         "연결 확인과 정상 배경이 든다(실패한 시도의 창은 뺐다). "
         f"평소 창이 {FEW_NORMAL_WINDOWS}개 미만인 단위의 \"구분\"은 근거가 얇다.",
+        "- 평소 창 = 큐에 오를 수 있는 공격 없는 창이다. 큐 자격 규칙이 적용된 작업의 non_host_only 창(브로드캐스트·멀티캐스트행 "
+        "연결만 있어 큐에서 뺀 창)은 평소 창에 들지 않는다(뺀 수는 JSON 단위 결과의 non_host_only_windows_excluded).",
         "- 걸린 시간 = 첫 알림 기록 시각 − 첫 공격 연결 시작. 표 1에는 잡힘일 때만 숫자로 쓰고, 구분 안 됨은 괄호 안에 참고로 쓴다. "
         "모든 알림은 dry_run 기록 시각이다.",
         f"- 종류별 대표 판정: 잡힘 {totals['detected']}종, 구분 안 됨 {totals['indistinct']}종, "

@@ -38,6 +38,7 @@ PCAP → Zeek → Silver → Gold → 그래프 순서로 만든다.
 | [summarize_eval.py](summarize_eval.py) | 모델별 Recall@N과 bootstrap 95% 구간 표 |
 | [check_lab_truth.py](check_lab_truth.py) | 실습망 정답 설정(lab-attacks.v1)의 관측값이 로컬 conn 로그에 규칙을 적용한 결과와 같은지 확인(평가 전용) |
 | [build_lab_detection.py](build_lab_detection.py) | VM DB 내보내기로 실습망 공격 종류별 탐지 여부·걸린 시간 표(`detection.json`·`detection.md`, 비율은 내지 않음) |
+| [measure_queue_eligibility.py](measure_queue_eligibility.py) | VM DB 내보내기와 로컬 conn 로그로 큐 자격 규칙(브로드캐스트·멀티캐스트행 연결만 있는 창 빼기) 전후의 조사 큐 비교. 먼저 저장된 창 점수로 DB 큐를 재현한다(`--baseline-silver`로 상한 출처도 다시 계산) |
 
 ## 3. 저장·배포·MLOps (단계 4·7)
 

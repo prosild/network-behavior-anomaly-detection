@@ -3,7 +3,11 @@
 예: python scripts/run_worker.py --set cic synthetic
 - 시작할 때 alias(기본 champion)를 버전으로 풀어 고정한다. 이 실행의 모든 작업이 같은 버전을 쓴다.
 - 같은 캡처·입력·묶음은 한 번만 저장된다. 다시 돌리면 succeeded 작업은 건너뛴다.
-입력 묶음 정의: configs/worker/inputs.v1.json.
+- set에 queue_eligibility 항목(규칙 설정·자산 설정·Silver 경로)이 있으면 큐 자격 규칙을 적용한다
+  (zeek_ad/queue_eligibility.py). 브로드캐스트·멀티캐스트행 연결만 있고 그 수가 설정 상한 이하인 originator 창에
+  라벨(non_host_only)을 붙여 결합 큐에서 빼고, 창 점수는 라벨과 함께 저장한다. 상한을 넘는 창은 큐에 남긴다.
+  규칙 입력은 작업 입력 지문에 들어간다. 항목이 없는 set(CIC·합성)은 계산과 지문이 예전과 같다.
+입력 묶음 정의: configs/worker/inputs.v1.json(실습망은 live_recompute.py가 쓴 리비전의 worker-inputs.json).
 """
 
 import argparse
@@ -19,8 +23,9 @@ import mlflow  # noqa: E402
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 from zeek_ad.db import connect, mlflow_tracking_uri  # noqa: E402
+from zeek_ad.queue_eligibility import apply_to_set  # noqa: E402
 from zeek_ad.worker import (  # noqa: E402
-    input_fingerprint, lock_job, mark_failed, open_job, resolve_bundle, upsert_bundle, write_results,
+    lock_job, mark_failed, open_job, resolve_bundle, set_input_fingerprint, upsert_bundle, write_results,
 )
 
 INPUTS = PROJECT_ROOT / "configs" / "worker" / "inputs.v1.json"
@@ -38,6 +43,31 @@ def fault(point):
         os._exit(17)
     if target == f"raise_{point}":
         raise RuntimeError(f"시험용 예외: {point}")
+
+
+def job_input_sha(cfg, capture_id, root=PROJECT_ROOT):
+    """작업 키의 입력 지문. set에 queue_eligibility 항목이 있으면 규칙 입력까지 넣는다(live_agent.revision_for_job과 같은 함수)."""
+    return set_input_fingerprint(cfg, capture_id, root)[0]
+
+
+def score_job(model, cfg, capture_id, bound, root=PROJECT_ROOT):
+    """점수 → 큐 자격 규칙 → 결합 큐. DB는 쓰지 않는다(트랜잭션 밖, 오래 걸림).
+
+    bound: 캡처 경계 한 행(packet_time_min, pcap_sha256). 반환 dict:
+    - scores: DB에 쓸 표. 라벨(non_host_only)을 바꾼 전체 창 점수(점수는 남고 split으로 이유가 보인다)
+    - fused, sources, queues: 라벨 창을 뺀 표로 만든 결합 큐
+    - eligibility: 규칙 요약(항목이 없으면 None)
+    """
+    raw = model.score_capture(capture_id, Path(root) / cfg["gold_dir"], Path(root) / cfg["graph_dir"],
+                              bound["packet_time_min"])
+    scores, queue_scores, eligibility = apply_to_set(raw, cfg, capture_id, root)
+    fused, sources, queues = model.build_queue(queue_scores, {capture_id: bound["pcap_sha256"]})
+    return {"scores": scores, "fused": fused, "sources": sources, "queues": queues, "eligibility": eligibility}
+
+
+def store_job(conn, job_id, job, fault_hook=None):
+    """score_job 결과를 쓴다(호출한 쪽 트랜잭션 안). 창 점수는 큐용 표가 아니라 라벨을 바꾼 전체 표다."""
+    write_results(conn, job_id, job["scores"], job["fused"], job["sources"], job["queues"], fault_hook)
 
 
 def main():
@@ -61,34 +91,38 @@ def main():
             upsert_bundle(conn, bundle)
         for name in args.sets:
             cfg = inputs[name]
-            gold_dir, graph_dir = PROJECT_ROOT / cfg["gold_dir"], PROJECT_ROOT / cfg["graph_dir"]
             bounds_path = PROJECT_ROOT / cfg["bounds"]
             bounds = {c["capture_id"]: c for c in json.loads(bounds_path.read_text(encoding="utf-8"))["captures"]}
             for cap in cfg["captures"]:
                 if args.captures and cap not in args.captures:
                     continue
-                input_sha, _ = input_fingerprint(gold_dir, graph_dir, bounds_path, cap)
+                # 지문 계산은 try 밖이다. Silver manifest가 없으면 작업 행 없이 끝나는데, live_recompute의 Silver 단계가
+                # manifest를 먼저 확인하므로 그대로 둔다.
+                input_sha = job_input_sha(cfg, cap, PROJECT_ROOT)
                 job_id, state = open_job(conn, cap, input_sha, bundle["bundle_id"])
                 if state == "done":
                     print(f"{cap}: job {job_id} 이미 완료, 건너뜀", flush=True)
                     continue
                 began = time.perf_counter()
                 try:
-                    scores = model.score_capture(cap, gold_dir, graph_dir, bounds[cap]["packet_time_min"])
-                    fused, sources, queues = model.build_queue(scores, {cap: bounds[cap]["pcap_sha256"]})
+                    job = score_job(model, cfg, cap, bounds[cap], PROJECT_ROOT)
                     with conn.transaction():
                         if not lock_job(conn, job_id):
                             print(f"{cap}: job {job_id} 다른 worker가 먼저 끝냄, 쓰지 않음", flush=True)
                             continue
-                        write_results(conn, job_id, scores, fused, sources, queues, fault)
+                        store_job(conn, job_id, job, fault)
                         fault("before_commit")
                     fault("after_commit")
                 except Exception as e:
                     with conn.transaction():
                         mark_failed(conn, cap, input_sha, bundle["bundle_id"], f"{type(e).__name__}: {e}")
                     raise
-                print(f"{cap}: job {job_id} ({state}) windows={len(scores) // 3} incidents={len(fused)} "
-                      f"{time.perf_counter() - began:.0f}s", flush=True)
+                # 뺀 창 수와, 브로드캐스트만 있지만 연결 수가 상한을 넘어 큐에 남긴 창 수
+                eligibility = job["eligibility"]
+                excluded = (f"{eligibility['label']}_windows={eligibility['excluded_windows']} "
+                            f"over_limit_kept={eligibility['over_limit_windows']} " if eligibility else "")
+                print(f"{cap}: job {job_id} ({state}) windows={len(job['scores']) // 3} incidents={len(job['fused'])} "
+                      f"{excluded}{time.perf_counter() - began:.0f}s", flush=True)
 
 
 if __name__ == "__main__":

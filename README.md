@@ -206,7 +206,7 @@ docker compose -f deploy/compose.yaml --env-file deploy/.env up -d && python scr
 ## 더 읽을 문서
 
 - [docs/portfolio-summary.md](docs/portfolio-summary.md): 한 장 요약.
-- [docs/design-decisions/](docs/design-decisions/): 설계를 바꾼 결정 20건. 결정마다 배경, 결정, 확인한 것, 한계를 적었다.
+- [docs/design-decisions/](docs/design-decisions/): 설계를 바꾼 결정 21건. 결정마다 배경, 결정, 확인한 것, 한계를 적었다.
 - [docs/design-discussion-log.md](docs/design-discussion-log.md): 설계 질문·이의와 판단 근거 70여 건. 설계를 바꾸지 않은 경우도 적었다.
 - [docs/stage-0-progress.md](docs/stage-0-progress.md) \~ [docs/stage-7-progress.md](docs/stage-7-progress.md): 단계별로 한 일, 실행 결과, 발견한 문제.
 - [docs/eda-design-evidence.md](docs/eda-design-evidence.md): EDA 측정과 그림.

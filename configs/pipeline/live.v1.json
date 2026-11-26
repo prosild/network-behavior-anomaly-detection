@@ -16,6 +16,11 @@
   "runs_out": "outputs/live/runs",
   "keep_revisions": 2,
   "assets": "configs/assets.lab.v1.json",
+  "queue_eligibility": {
+    "enabled": true,
+    "config": "configs/worker/queue-eligibility.v1.json",
+    "note": "켜면 리비전의 worker-inputs.json live set에 큐 자격 규칙 항목을 넣는다(브로드캐스트·멀티캐스트행 연결만 상한 이하로 있는 originator 창을 조사 큐에서 뺀다). 규칙 설정과 자산 설정은 리비전 폴더(queue_eligibility/)에 사본을 두고 그 사본으로 채점·지문을 계산한다. 그래서 이 키나 공용 설정 파일을 바꾸면 다음에 새로 계산하는 리비전부터 적용되고, 이미 만든 리비전의 사본과 작업 입력 지문은 그대로다."
+  },
   "agent": true,
   "agent_retries": 2,
   "stale_received_seconds": 600

@@ -7,7 +7,10 @@
 - silver/conn_v1/       Silver(scripts/build_silver_conn.py)
 - gold/conn_features_v1/, events/tgn_v1/, gold/conn_features_v2/   Gold v1 → 이벤트 표 → Gold v2(합성 캡처와 같은 순서)
 - graphs/tgn_v1/        TGN 그래프: 월요일 원래 이벤트 + 그날 이벤트(인코딩은 월요일 train으로 적합, 원래 그래프와 같아야 한다)
-- worker-inputs.json    채점 worker·근거 요약에 넘길 입력 묶음 정의(configs/worker/inputs.v1.json과 같은 형식)
+- worker-inputs.json    채점 worker·근거 요약에 넘길 입력 묶음 정의(configs/worker/inputs.v1.json과 같은 형식).
+                        설정 queue_eligibility가 켜져 있으면(기본) live set에 큐 자격 규칙 항목을 넣는다.
+                        규칙 설정·자산 설정은 queue_eligibility/에 복사해 그 사본을 가리킨다
+                        (브로드캐스트·멀티캐스트행 연결만 상한 이하로 있는 originator 창을 큐에서 뺀다, zeek_ad/queue_eligibility.py)
 - pipeline.json         단계별 소요 시간과 결과
 이어서 채점 worker(Registry champion 묶음) → 근거 요약을 DB에 쓰고, 이 리비전의 파일들을 처리 기록에서 pipeline_done으로 바꾼다.
 같은 리비전이 이미 끝났으면 아무것도 하지 않는다.
@@ -18,7 +21,9 @@
 import argparse
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import time
@@ -33,6 +38,7 @@ CONFIG = PROJECT_ROOT / "configs" / "pipeline" / "live.v1.json"
 CIC_ASSETS = PROJECT_ROOT / "configs" / "assets.cic-ids-2017.v1.json"
 MONDAY_EVENTS = PROJECT_ROOT / "outputs" / "events" / "tgn_v1"          # 월요일 원래 이벤트(그래프 앞부분)
 MONDAY_ENCODING = PROJECT_ROOT / "outputs" / "graphs" / "tgn_v1" / "encoding.json"
+QUEUE_ELIGIBILITY = "configs/worker/queue-eligibility.v1.json"   # 큐 자격 규칙 기본 설정(프로젝트 루트 기준)
 
 
 def run_script(name, *args):
@@ -43,6 +49,49 @@ def run_script(name, *args):
         tail = "\n".join((result.stdout + result.stderr).strip().splitlines()[-8:])
         raise RuntimeError(f"{name} 실패(종료 코드 {result.returncode})\n{tail}")
     return result.stdout
+
+
+def queue_eligibility_entry(config, rev, silver_dir, root=PROJECT_ROOT):
+    """worker-inputs.json live set의 queue_eligibility 항목. 설정에서 꺼져 있으면 None.
+
+    설정 키 queue_eligibility: {"enabled": 참/거짓, "config": 규칙 설정 경로}. 키가 없으면 켠 것으로 보고 기본 규칙 설정을 쓴다.
+    자산 설정은 Gold를 만들 때 쓴 것(config["assets"])과 같다. 연결 자료는 그 리비전의 Silver다.
+    규칙 설정과 자산 설정은 리비전 폴더(<리비전>/queue_eligibility/)로 복사하고 항목은 사본을 가리킨다.
+    그래서 공용 설정을 나중에 고쳐도 이미 만든 리비전의 입력 지문(worker.set_input_fingerprint)은 그대로이고,
+    새 설정은 다음 리비전부터 적용된다. 사본이 이미 있으면 덮어쓰지 않는다(같은 리비전을 다시 돌려도 지문이 같다).
+    """
+    setting = config.get("queue_eligibility", {})
+    if not setting.get("enabled", True):
+        return None
+    root, folder = Path(root), Path(rev) / "queue_eligibility"
+    folder.mkdir(parents=True, exist_ok=True)
+    copies = {}
+    for key, source in (("config", setting.get("config", QUEUE_ELIGIBILITY)), ("assets", config["assets"])):
+        copy = folder / Path(source).name
+        if not copy.exists():
+            tmp = copy.with_name(copy.name + ".tmp")
+            shutil.copyfile(root / source, tmp)
+            os.replace(tmp, copy)           # 반쯤 쓴 사본이 남지 않게 이름 바꾸기로 게시한다
+        copies[key] = project_path(copy)
+    return {**copies, "silver_dir": silver_dir}
+
+
+def write_worker_inputs(path, capture_id, rev, dirs, config, root=PROJECT_ROOT):
+    """채점 worker·근거 요약에 넘길 입력 묶음 정의(worker-inputs.json)를 쓰고 그 내용을 돌려준다.
+
+    dirs: 리비전 안의 경로(프로젝트 루트 기준 문자열) gold·graph·bounds·events·zeek·silver.
+    큐 자격 규칙이 켜져 있으면 live set에 queue_eligibility 항목(리비전 안 사본)을 넣는다.
+    """
+    live = {"captures": [capture_id], "gold_dir": dirs["gold"], "graph_dir": dirs["graph"], "bounds": dirs["bounds"],
+            "events_dir": dirs["events"], "zeek_run_dirs": {capture_id: dirs["zeek"]}}
+    eligibility = queue_eligibility_entry(config, rev, dirs["silver"], root)
+    if eligibility:
+        live["queue_eligibility"] = eligibility
+    body = {"config_id": f"worker-inputs.{capture_id}.{Path(rev).name}",
+            "note": "live_recompute.py가 만든 실습망 리비전의 입력 묶음이다. 손으로 고치지 않는다.",
+            "sets": {"live": live}}
+    Path(path).write_text(json.dumps(body, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    return body
 
 
 def main():
@@ -144,13 +193,9 @@ def main():
 
     def score():
         rel = lambda p: project_path(p)  # noqa: E731
-        worker_inputs.write_text(json.dumps({
-            "config_id": f"worker-inputs.{args.capture}.{rev.name}",
-            "note": "live_recompute.py가 만든 실습망 리비전의 입력 묶음이다. 손으로 고치지 않는다.",
-            "sets": {"live": {"captures": [args.capture], "gold_dir": rel(gold2), "graph_dir": rel(graph),
-                              "bounds": rel(bounds), "events_dir": rel(events),
-                              "zeek_run_dirs": {args.capture: rel(zeek_dir)}}}}, ensure_ascii=False, indent=1) + "\n",
-            encoding="utf-8")
+        write_worker_inputs(worker_inputs, args.capture, rev,
+                            {"gold": rel(gold2), "graph": rel(graph), "bounds": rel(bounds), "events": rel(events),
+                             "zeek": rel(zeek_dir), "silver": rel(silver)}, config)
         out = run_script("run_worker.py", "--inputs", worker_inputs, "--set", "live")
         with connect("zeekad_worker") as conn:
             job = conn.execute("""SELECT j.job_id, j.status, (SELECT count(*) FROM zeekad.incident i WHERE i.job_id = j.job_id)
