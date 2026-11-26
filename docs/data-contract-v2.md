@@ -162,10 +162,38 @@ SELECT dashboard.transition_incident(
 );  -- 반환: 바뀐 상태
 ```
 
-- 한 칸씩만 앞으로 간다: `open → investigating → closed`. 되돌리기와 건너뛰기는 함수가 거부한다(SQLSTATE `22023`). 사건이 없으면 `02000`이다.
+- 한 칸씩만 앞으로 간다: `open → investigating → closed`. 되돌리기와 건너뛰기는 함수가 거부한다(SQLSTATE `22023`). 사건이 없으면 `02000`이다. 종결한 사건을 다시 여는 것은 이 함수가 아니라 아래 "쓰기: 종결한 사건 다시 열기"의 함수로 한다.
 - `actor`와 `reason`은 비울 수 없다. 오류 메시지는 한국어 문장이라 그대로 사용자에게 보여 줘도 된다.
 - 같은 사건을 두 사람이 동시에 바꾸면 하나만 성공한다. 다른 하나는 "허용되지 않는 상태 변경"으로 거부된다(행 잠금).
 - 화면 권장: 버튼은 지금 상태에서 갈 수 있는 다음 상태만 보여 준다. 종료 버튼은 결론 세 가지 중 하나를 고르게 한다.
+
+## 쓰기: 종결한 사건 다시 열기(2026-11-26 추가, migration 018, [DD-022](design-decisions/DD-022-incident-reopen.md))
+
+| 항목 | 값 |
+| --- | --- |
+| 계정 | `dashboard_rw`(상태 변경과 같은 계정). 파이프라인 계정에는 실행 권한이 없다 |
+| 권한 | 함수 `dashboard.reopen_incident` 실행 |
+
+```sql
+SELECT dashboard.reopen_incident(
+    p_job      => 83,
+    p_incident => 'lab-20261122|10.10.0.50|originator|1795362000',
+    p_actor    => 'analyst01',       -- 로그인한 사용자
+    p_reason   => '같은 출발지의 스캔이 다시 관측됨',
+    p_expected_resolution => 'false_positive'   -- 선택(권장). 화면이 보고 있던 결론
+);  -- 반환: 'investigating'
+```
+
+- 지금 상태가 `closed`일 때만 성공한다. 사건은 `investigating`이 되고 결론(`zeekad_resolution`)은 null이 된다. 다시 종결할 때는 `dashboard.transition_incident`로 결론을 새로 고른다.
+- 거부(SQLSTATE): 상태가 `closed`가 아니면 `22023`("종료한 사건만 다시 열 수 있다. 지금 상태: …"), `p_actor`나 `p_reason`이 비었으면 `22023`, `p_job`에 그 사건이 없으면 `02000`. 오류 메시지는 한국어 문장이다.
+- 이력(`dashboard.incident_status_history`)에 `from_status = 'closed'`, `to_status = 'investigating'`, `resolution = null` 행이 추가된다. 되돌린 결론은 앞선 종결 행에 남아 있다.
+- 재개를 별도 함수로 둔 이유: `transition_incident(p_to => 'investigating')`는 "처음 조사 시작"에도 쓰인다. 같은 함수가 재개까지 받으면, 다른 사람이 종결한 사건을 오래된 화면의 "분석 시작"이 다시 열어 결론을 지운다. 그 호출은 지금처럼 `22023`으로 거부된다.
+- `p_expected_resolution`(선택, 권장): 화면이 보고 있던 결론(`zeekad_resolution`)을 보내면 지금 결론과 같을 때만 다시 연다. 다르면 `22023`으로 거부한다. 그 사이 다른 사람이 다시 열어 새 결론으로 종결한 사건을 오래된 화면이 지우지 못하게 하는 장치다. 보내지 않으면(null) 상태가 `closed`인지만 본다.
+- 같은 사건을 두 사람이 동시에 다시 열면 하나만 성공한다. 다른 하나는 "지금 상태: investigating"으로 거부된다(행 잠금). 기본 격리 수준(READ COMMITTED) 기준이다. REPEATABLE READ 이상으로 부르면 `40001`(직렬화 실패)이 날 수 있고, `transition_incident`도 같다.
+- 재개한 사건은 결론이 없으므로 분석가 결론 집계(`dashboard.feedback_summary`)의 "결론 난 사건"에서 빠진다.
+- 화면 권장: "다시 열기" 버튼은 종결 상태의 사건에만 보여 주고 사유를 받는다. 누가 다시 열 수 있는지는 대시보드의 권한으로 정한다.
+- 공개 데모 DB(스냅샷 복원본)에는 `db/migrations/018_incident_reopen.sql` 하나를 실행하면 된다. 표와 뷰를 바꾸지 않고 함수 하나와 그 소유자·권한만 정하며, 다시 실행해도 결과가 같다. 선행 조건은 migration 012까지 적용된 DB와 `zeekad_owner`·`dashboard_rw` 역할이다. 파일이 함수 소유자를 `zeekad_owner`로 맞추므로 슈퍼유저로 실행해도 된다.
+- 반영 순서: 파이프라인 이미지 → migration 018 → 대시보드의 "다시 열기" 버튼. 이유는 DD-022 "배포 순서".
 
 ## v2.1 보완(2026-11-17): 같은 캡처에 채점 작업이 여러 개일 때(Q54)
 
@@ -214,6 +242,7 @@ SELECT dashboard.decide_review(
 - 거부(SQLSTATE): 결정 값이 둘 중 하나가 아니거나 `p_analyst`가 비었으면 `22023`, 검토 요청이 없으면 `02000`, 이미 결정한 요청이면 `22023`. 결정은 한 번뿐이다.
 - 화면 권장: 결정 버튼은 `zeekad_review_action IS NULL`인 요청에만 보여 준다. 같은 사건의 요청이 여러 작업에 있으면 `zeekad_report_job_id`의 것만 보여 준다.
 - 상태를 대시보드에서 먼저 바꿔도 된다. 흐름이 재개될 때 이미 지난 상태는 건너뛴다.
+- 결정한 뒤에 분석가가 그 사건을 종결했다가 다시 열었으면(`dashboard.reopen_incident`), 파이프라인은 앞선 `dismiss` 결정으로 그 사건을 다시 닫지 않는다(2026-11-26, DD-022). 이때 검토 뷰에는 `zeekad_review_action = 'dismiss'`와 `zeekad_review_resumed_at`이 있는데 사건 상태는 `investigating`이다. 재개 실패가 아니다(`zeekad_review_resume_failed`는 false다). 결정이 다시 연 것보다 나중이면 지금처럼 닫는다.
 
 ## 분석가 결론 집계(2026-11-19 추가, migration 017, Q61)
 
@@ -262,14 +291,14 @@ SELECT dashboard.decide_review(
 | 캡처 ID 형식 | 표시 이름 | 툴팁 |
 | --- | --- | --- |
 | `cic17-<요일>` | CIC-IDS2017 <요일>요일 | 공개 데이터셋 CIC-IDS2017의 원본 트래픽(평가용). 월요일 정상만 학습에 썼다. |
-| `syn1-<요일>` | CIC <요일>요일 + 합성 APT | CIC <요일>요일 Zeek 로그 사본에 합성 APT 패턴 5종(beacon, 느린 유출, DNS 터널, 측면 이동, 느린 정찰)을 하나씩 코드로 끼워 넣었다. 네트워크로 보낸 트래픽이 아니다([DD-008](design-decisions/DD-008-synthetic-apt-injection.md)). |
+| `syn1-<요일>` | CIC <요일>요일 + 합성 패턴 | CIC <요일>요일 Zeek 로그 사본에 합성 패턴 5종(beacon, 느린 유출, DNS 터널, 측면 이동, 느린 정찰)을 하나씩 코드로 끼워 넣었다. 네트워크로 보낸 트래픽이 아니다([DD-008](design-decisions/DD-008-synthetic-apt-injection.md)). |
 | `lab-YYYYMMDD` | 실습망 YYYY-MM-DD | 배포 VM이 격리 실습망에서 실제로 수집한 트래픽(날짜는 UTC). 하루가 처리 단위다. |
 
 실습망 캡처별 표시(배포 VM DB 기준, 2026-11-23)
 
 | 캡처 | 덧붙일 표시 | 내용 |
 | --- | --- | --- |
-| `lab-20261122` | Kali 공격 7종 + 타깃 VM | 세그먼트 센서 확장(DD-020) 뒤의 공격 시험: 빠른·느린 스캔, 비커닝, 느린 유출, 측면 이동, SSH 무차별 대입, DNS 터널([단계 7 진행 기록](stage-7-progress.md) 열두째 작업). 호스트: 10.10.0.50 Kali(공격자), 10.10.0.60 Kali의 별칭(정상 배경용 서버), 10.10.0.20 타깃 VM, 10.10.0.21\~23 타깃의 IP 별칭(측면 이동용). 스레드 묶음이 처음 기록된 캡처다 |
+| `lab-20261122` | Kali 공격 6종 + 타깃 VM | 세그먼트 센서 확장(DD-020) 뒤의 공격 시험: 느린 스캔, 비커닝, 분할 유출, SMB 공유 탐색, SSH 무차별 대입, DNS 터널(빠른 스캔은 `lab-20261119`에 있다. 정답은 `configs/ground-truth/lab-attacks.v1.json`, [단계 7 진행 기록](stage-7-progress.md) 열두째 작업). 호스트: 10.10.0.50 Kali(공격자), 10.10.0.60 Kali의 별칭(정상 배경용 서버), 10.10.0.20 타깃 VM, 10.10.0.21\~23 타깃의 IP 별칭(공유 탐색용). 스레드 묶음이 처음 기록된 캡처다 |
 | `lab-20261123` | 시험(위 캡처의 뒤 시간) | `lab-20261122` 시험 뒤 UTC 날짜가 넘어간 구간. 5분에 패킷 몇 개의 유휴 트래픽이고 공격 실행 기록은 없다. 알림은 모두 `lab-20261122` 묶음의 답글이다 |
 | `lab-20261119` | Kali 공격 + 정상 배경 | Kali 공격만(실행 1), 정상 배경 35분(월요일 재생 + 합성 정상 클라이언트) 사이에 공격(실행 2). 시험 호스트 구분은 [2026-11-19 전달 글](dashboard-handoff-2026-11-19.md) 5절 |
 | `lab-20261118` | 시험 | 배포 VM 첫 실행. Kali nmap 첫 시험, ping·파일 회전 시험 |

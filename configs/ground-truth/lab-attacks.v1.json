@@ -4,7 +4,7 @@
   "dataset": "lab (VMnet2 10.10.0.0/24, DD-015·DD-020)",
   "recorded_at": "2026-11-26",
   "frozen_before_scoring": false,
-  "frozen_note": "공격 실행과 채점(2026-11-19, 2026-11-22)이 끝난 뒤에 정리했다. 규칙은 생성기 명령과 생성기 로그, conn 5-튜플로만 썼고 점수·사건·알림은 보지 않았다.",
+  "frozen_note": "공격 실행과 채점(2026-11-19, 2026-11-22)이 끝난 뒤에 정리했다. 규칙은 생성기 명령과 생성기 로그, conn 5-튜플로만 썼고 점수·사건·알림은 보지 않았다. lab-ep-012·013은 조사 큐 자격 규칙(DD-021)을 배포한 뒤 2026-11-26에 다시 돌린 실행이고, 같은 날 정리했다.",
   "source": "docs/stage-6-progress.md 스물둘째 작업; docs/stage-7-progress.md 열두째 작업; scripts/lab_*.sh; outputs/lab_eval/generator-logs/(타깃 VM 로그, 로컬 보관)",
   "rule_semantics": "규칙 하나는 capture_id, orig_h 목록, resp_h 목록, ts가 [ts_start_utc, ts_end_utc) 안, resp_p 목록(있으면), proto(있으면)를 모두 만족하는 연결을 고른다. 시각은 연결 시작(ts)이다. 에피소드의 연결은 규칙들의 합집합이다. 키와 뜻은 cic17-episodes.v1과 같다. 여기서는 Zeek conn.log 행에 적용해 확인했다. 연결 식별은 수집 파일 폴더 + uid다(5분 파일마다 Zeek을 따로 돌려 uid가 파일 사이에서 겹친다).",
   "evaluation_only": "이 조건은 평가 전용이다. 모델·LLM 입력이나 근거 검색 필터에 쓰지 않는다(설계 5.1).",
@@ -649,6 +649,126 @@
           "proto": "udp"
         }
       ]
+    },
+    {
+      "episode_id": "lab-ep-012",
+      "scenario": "beaconing",
+      "run": 3,
+      "status": "confirmed",
+      "status_reason": "연결 15개(모두 SF)가 생성기 로그의 beat와 맞는다. 조사 큐 자격 규칙(DD-021)을 배포한 뒤 같은 생성기로 다시 돌린 실행이다",
+      "outcome": "succeeded",
+      "roles": "10.10.0.20 = 침해된 내부 호스트(연결을 거는 쪽), 10.10.0.50 = C2 수신기",
+      "background": "앞 단계로 타깃 정상 배경(05:05:05~05:19:54)을 돌리고 빈 창 하나 뒤에 실행. 조사 큐 자격 규칙(DD-021) 배포 뒤의 실행이다",
+      "generator": {
+        "host": "10.10.0.20",
+        "command": "bash lab_beacon.sh 10.10.0.50 4444 60 0.2 840",
+        "script": "scripts/lab_beacon.sh(타깃의 ~/lab_recheck.sh가 부름)",
+        "log": "outputs/lab_eval/generator-logs/lab-target/beacon-20261126T052505Z.log",
+        "log_start_utc": "2026-11-26T05:25:05Z",
+        "log_end_utc": "2026-11-26T05:39:34Z"
+      },
+      "expected_units": [
+        {
+          "asset": "10.10.0.20",
+          "role": "originator"
+        },
+        {
+          "asset": "10.10.0.50",
+          "role": "responder"
+        }
+      ],
+      "observed": {
+        "connections": 15,
+        "first_ts_utc": "2026-11-26T05:25:05Z",
+        "last_ts_utc": "2026-11-26T05:38:38Z",
+        "windows_utc": [
+          "05:25",
+          "05:30",
+          "05:35"
+        ],
+        "connections_per_window": {
+          "05:25": 5,
+          "05:30": 6,
+          "05:35": 4
+        }
+      },
+      "rules": [
+        {
+          "capture_id": "lab-20261126",
+          "orig_h": [
+            "10.10.0.20"
+          ],
+          "resp_h": [
+            "10.10.0.50"
+          ],
+          "ts_start_utc": "2026-11-26T05:25:00Z",
+          "ts_end_utc": "2026-11-26T05:40:00Z",
+          "resp_p": [
+            4444
+          ],
+          "proto": "tcp"
+        }
+      ]
+    },
+    {
+      "episode_id": "lab-ep-013",
+      "scenario": "slow_exfil",
+      "run": 2,
+      "status": "confirmed",
+      "status_reason": "업로드 3번, 각 4,194,304바이트, 약 48초(SF). 생성기 로그의 upload와 맞는다. 조사 큐 자격 규칙(DD-021)을 배포한 뒤의 실행이다",
+      "outcome": "succeeded",
+      "roles": "10.10.0.20 = 침해된 내부 호스트(올리는 쪽), 10.10.0.50 = C2 수신기",
+      "background": "앞 단계로 타깃 정상 배경(05:05:05~05:19:54)을 돌리고 빈 창 하나 뒤에 실행. 조사 큐 자격 규칙(DD-021) 배포 뒤의 실행이다",
+      "generator": {
+        "host": "10.10.0.20",
+        "command": "bash lab_exfil.sh 10.10.0.50 4445 300 4 880",
+        "script": "scripts/lab_exfil.sh(타깃의 ~/lab_recheck.sh가 부름)",
+        "log": "outputs/lab_eval/generator-logs/lab-target/exfil-20261126T054505Z.log",
+        "log_start_utc": "2026-11-26T05:45:05Z",
+        "log_end_utc": "2026-11-26T06:00:05Z"
+      },
+      "expected_units": [
+        {
+          "asset": "10.10.0.20",
+          "role": "originator"
+        },
+        {
+          "asset": "10.10.0.50",
+          "role": "responder"
+        }
+      ],
+      "observed": {
+        "connections": 3,
+        "first_ts_utc": "2026-11-26T05:45:05Z",
+        "last_ts_utc": "2026-11-26T05:55:05Z",
+        "windows_utc": [
+          "05:45",
+          "05:50",
+          "05:55"
+        ],
+        "connections_per_window": {
+          "05:45": 1,
+          "05:50": 1,
+          "05:55": 1
+        }
+      },
+      "rules": [
+        {
+          "capture_id": "lab-20261126",
+          "orig_h": [
+            "10.10.0.20"
+          ],
+          "resp_h": [
+            "10.10.0.50"
+          ],
+          "ts_start_utc": "2026-11-26T05:45:00Z",
+          "ts_end_utc": "2026-11-26T06:00:00Z",
+          "resp_p": [
+            4445
+          ],
+          "proto": "tcp"
+        }
+      ]
     }
   ],
   "window_basis": "observed의 창은 파이프라인과 같이 연결 기록 시각(_write_ts)을 300초로 내림해 정한다(설계 3.2). 날짜는 캡처의 날짜(UTC)다. 11개 모두 연결 시작(ts)으로 정한 창 집합과 같았고 창별 연결 수만 조금 다르다.",
@@ -730,6 +850,34 @@
       "what": "NetBIOS 브로드캐스트. 생성기가 보낸 것이 아니다(타깃 VM의 Samba로 추정, conn만으로는 확인하지 않았다)",
       "when_utc": "10.10.0.20은 13:50:11~23:59:14(138 56건, 137 3건), 10.10.0.21~23은 16:23:23~18:16:46(138 각 15건)",
       "flow": "10.10.0.20~23 → 10.10.0.255 udp 137·138"
+    },
+    {
+      "capture_id": "lab-20261126",
+      "kind": "check",
+      "what": "연결 확인 ping 1건(준비 상태를 보려고 타깃에서 보냄)",
+      "when_utc": "04:50:38",
+      "flow": "10.10.0.20 → 10.10.0.50 icmp"
+    },
+    {
+      "capture_id": "lab-20261126",
+      "kind": "check",
+      "what": "시작 전 수신기·서버 확인용 0바이트 연결 5개(lab_recheck.sh)",
+      "when_utc": "04:56:35",
+      "flow": "10.10.0.20 → 10.10.0.60 tcp 8000·8080·8888, 10.10.0.20 → 10.10.0.50 tcp 4444·4445"
+    },
+    {
+      "capture_id": "lab-20261126",
+      "kind": "background",
+      "what": "타깃 정상 배경(lab_normal_client.sh) 요청 99건. 공격 단계와 견줄 평소 창을 만들려고 먼저 돌렸다",
+      "when_utc": "05:05:05~05:19:54",
+      "flow": "10.10.0.20 → 10.10.0.60 tcp 8000·8080·8888"
+    },
+    {
+      "capture_id": "lab-20261126",
+      "kind": "broadcast",
+      "what": "NetBIOS 브로드캐스트. 약 12분마다 1건. 조사 큐 자격 규칙(DD-021)으로 이 연결만 있는 창은 큐에서 빠진다",
+      "when_utc": "02:17:19부터 하루 내내",
+      "flow": "10.10.0.20 → 10.10.0.255 udp 138"
     }
   ]
 }

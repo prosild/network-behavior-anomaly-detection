@@ -1,7 +1,9 @@
 """이미 초기화된 DB에 대시보드 상태 변경 계정(dashboard_rw)을 더한다. 새로 만드는 DB는 deploy/postgres/init/01이 만든다.
 
 관리자(postgres) 계정으로 127.0.0.1에 접속한다. 비밀번호는 deploy/.env에서 읽고 출력하지 않는다. 여러 번 실행해도 된다.
-이 계정이 할 수 있는 것은 migration 008의 dashboard.transition_incident 실행뿐이다.
+이 계정이 할 수 있는 것은 DB 함수 세 개의 실행뿐이다: dashboard.transition_incident(사건 상태 변경, migration 008),
+dashboard.decide_review(분석가 검토 결정, 014), dashboard.reopen_incident(종료한 사건 다시 열기, 018). 표에 직접 쓰지 못한다.
+실행 권한은 각 migration이 준다. 이 스크립트는 계정과 DB 접속 권한만 만든다.
 예: python scripts/add_dashboard_rw.py
 """
 

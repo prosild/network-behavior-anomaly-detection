@@ -7,11 +7,11 @@
 | 문서 | 내용 |
 | --- | --- |
 | [FINAL_PROJECT_DESIGN.md](../FINAL_PROJECT_DESIGN.md) | 구현 기준인 최종 설계. 2.2절 표에 이후 설계 결정(DD) 목록이 있다. DD가 본문보다 우선한다 |
-| [design-decisions/](design-decisions/) | 설계 결정 DD-001\~021. 결정마다 배경, 결정, 확인한 것, 한계를 적었다 |
+| [design-decisions/](design-decisions/) | 설계 결정 DD-001\~022. 결정마다 배경, 결정, 확인한 것, 한계를 적었다 |
 | [design-discussion-log.md](design-discussion-log.md) | 설계 질문·이의와 판단 근거(Q1\~). 설계를 바꾸지 않은 경우도 적었다 |
 | [IMPLEMENTATION_CHECKLIST.md](../IMPLEMENTATION_CHECKLIST.md) | 단계별 검증 조건(V1\~V7) |
 | [final-design-verification-results.md](../final-design-verification-results.md) | 설계 확정 전 독립 검증 결과(2026-11-03) |
-| [project-architecture-mermaid.md](project-architecture-mermaid.md) | 파이프라인과 DB 구조도(2026-11-13 기준. 이후 바뀐 것은 README 구조도와 DD-012\~021) |
+| [project-architecture-mermaid.md](project-architecture-mermaid.md) | 파이프라인과 DB 구조도(2026-11-13 기준. 이후 바뀐 것은 README 구조도와 DD-012\~022) |
 
 ## 데이터·특징·정답
 
@@ -55,7 +55,7 @@
 | [stage-0-progress.md](stage-0-progress.md) | 0. 입력 검사, 내부 자산 판정, 5분 창과 학습/보류 분할, 실행 환경 |
 | [stage-1-progress.md](stage-1-progress.md) | 1. Zeek 실행 환경 고정과 재현, 5일 Zeek 처리 |
 | [stage-2-progress.md](stage-2-progress.md) | 2. Bronze → Silver(PySpark), 캡처 시각 범위, 역할과 창 라벨, 특징 사전 |
-| [stage-3-progress.md](stage-3-progress.md) | 3. 정답 에피소드, 평가기, 기준선·IF, Transformer, TGN, 합성 APT, 결합 |
+| [stage-3-progress.md](stage-3-progress.md) | 3. 정답 에피소드, 평가기, 기준선·IF, Transformer, TGN, 합성 패턴, 결합 |
 | [stage-4-progress.md](stage-4-progress.md) | 4. PostgreSQL, MLflow Registry 배포 묶음, 추론 worker와 장애 복구, 근거 API |
 | [stage-5-progress.md](stage-5-progress.md) | 5. ATT&CK RAG, LLM 보고서·검증, 전송 판단, Slack dry-run, LangGraph, 사건 상태 |
 | [stage-6-progress.md](stage-6-progress.md) | 6. 파일 단위 자동 파이프라인, VMware 배포, 실습망 Kali 시험과 정상 배경 |

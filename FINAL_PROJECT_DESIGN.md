@@ -83,6 +83,7 @@ WAS 연관 분석, 자동 차단, Kafka, Kubernetes, 대규모 실험망, 초기
 | [DD-019](docs/design-decisions/DD-019-review-decision-path.md) | 분석가 검토 결정은 대시보드가 DB 함수 `dashboard.decide_review`로 넣고, 멈춘 LangGraph 흐름은 파이프라인(감시 프로그램)이 찾아 재개한다. 근거 API는 읽기 전용 그대로다(Q50 원안 대체) |
 | [DD-020](docs/design-decisions/DD-020-lab-segment-sensor.md) | 배포 VM을 실습망 세그먼트 전체를 promiscuous로 보는 센서로 쓰고(수집 명령은 그대로, VMware host-only vmnet이 제3자 유니캐스트를 뿌림을 실측 확인), 공격 대상 VM(lab-target 10.10.0.20, SSH·HTTP·Samba)을 추가한다. 타깃·Kali는 10.10.0.0/24 안이라 자산 설정 변경 없이 채점된다. 시나리오 우선순위는 비커닝 → 느린 스캔 → 느린 유출. 측면 이동은 타깃 복제 뒤 |
 | [DD-021](docs/design-decisions/DD-021-queue-eligibility-non-host-only.md) | 자산이 그 창에 건 연결이 전부 호스트가 아닌 주소(내부 대역의 네트워크·브로드캐스트 주소, 제한 브로드캐스트, 멀티캐스트)로 갔고 그 수가 25개(CIC 월요일 정상 창의 최대) 이하인 originator 창은 점수를 남기되 조사 큐에 올리지 않는다(`split = non_host_only`). 채점 worker에서 큐를 만들기 전에 적용하고 모델·특징·묶음은 바꾸지 않는다. 실습망(live) 입력에만 적용하고 CIC·합성 평가는 그대로 둔다 |
+| [DD-022](docs/design-decisions/DD-022-incident-reopen.md) | 종결한 사건을 다시 열 수 있게 한다. 새 DB 함수 `dashboard.reopen_incident`가 종결 상태의 사건만 `investigating`으로 돌린다(사유 필수, 이력에 남고 결론은 비운다, 실행 권한은 `dashboard_rw`). `dashboard.transition_incident`는 바꾸지 않아 앞으로만 간다. 파이프라인은 사람이 다시 연 사건을 그보다 앞선 검토 결정으로 다시 닫지 않는다(migration 018) |
 
 ## 3. 데이터와 관측 단위
 
