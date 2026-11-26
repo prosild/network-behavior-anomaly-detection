@@ -21,6 +21,7 @@
 | --- | --- |
 | [data-usage-terms.md](data-usage-terms.md) | CIC-IDS2017·개선 라벨·MITRE ATT&CK 이용 조건과 인용 |
 | [observation-meaning.md](observation-meaning.md) | 공격 후보 하나와 정상 비교 하나를 Zeek 관측으로 읽는 법 |
+| [llm-injection-tests.md](llm-injection-tests.md) | 간접 프롬프트 인젝션: 공격 문장을 넣어 본 자리, 막힌 곳, 남긴 구멍과 LLM 응답 검사 규칙 |
 | [eda-design-evidence.md](eda-design-evidence.md) | EDA 결과와 설계 근거(그림 [figures/eda/](figures/eda/)) |
 | [feature-dictionary-v1.md](feature-dictionary-v1.md), [feature-dictionary-v2.md](feature-dictionary-v2.md) | 특징 사전(v1 conn 18개, v2는 프로토콜 로그 24개를 더한 42개) |
 | [ground-truth-v1.md](ground-truth-v1.md) | 정답 에피소드를 만든 방법과 목록(평가 전용) |
