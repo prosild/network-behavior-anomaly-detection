@@ -952,3 +952,10 @@
 - **판단(Claude):** 지금은 A를 권한다. 공개 수치와 서류에는 영향이 없고, 대시보드는 이미 동점 자리의 순위를 쓰지 않기로 했다. B는 작고 분명한 고침이라 다음에 운영 코드를 고칠 때 함께 하는 것이 낫다.
 - **결과(사용자 결정, 2026-11-26):** A. 기록만 한다(데이터 계약의 `latest_incident_queue` 주의, 대시보드 전달 글 9절, 실습망 공격 탐지 결과). 운영 코드를 다시 고칠 일이 생기면 B를 함께 검토한다.
 
+### Q87. 새 공개 스냅샷에서 대시보드 목록·상세가 3\~3.7배 느려졌다. 인덱스를 zeek_AD에 넣나 (2026-11-27)
+- **상황(대시보드 세션이 알림):** 새 공개 스냅샷(2026-11-26)으로 목록·상세 응답이 3\~3.7배 느려졌다. 원인은 계약 뷰 `dashboard.latest_incident_queue`(migration 012)의 행마다 하는 조회 `LEFT JOIN LATERAL (… FROM agent_report r WHERE r.incident_id = q.incident_id ORDER BY r.job_id DESC LIMIT 1)`다. `agent_report`에는 기본 키 (job_id, incident_id) 인덱스만 있어 행마다 그 인덱스 전체를 거꾸로 훑는다. 보고서가 333행에서 2,857행으로 늘었고, 대부분 숨김 캡처 `lab-20261123`의 템플릿 2,263행(11-23 한도 초과 때)이다. 대시보드는 (incident_id, job_id DESC) 인덱스를 일회용 DB에 만들어 결과가 같고(md5) 무거운 문장이 133\~180ms → 16\~61ms가 되는 것을 확인했고, 공개용 DB 사본에만 넣기로 했다. zeek_AD의 migration으로 넣을지는 zeek_AD의 판단으로 넘겼다.
+- **확인(Claude):** 같은 뷰의 분석가 검토 조회(`analyst_review`)도 같은 꼴이지만 행이 몇 개뿐이라 잰 문제가 없다. Slack 알림 여부(`EXISTS`)는 행마다가 아니라 해시 세미 조인 한 번이다(대시보드의 계획 분석).
+- **선택지(Claude 제시):** A. zeek_AD에 migration 019로 같은 인덱스를 넣는다(이름을 대시보드 사본과 맞춤). B. 대시보드 사본에만 둔다.
+- **판단(Claude):** A를 권했다. 뷰는 zeek_AD의 계약이다. 사본에만 넣으면 공개 DB의 구조가 원본과 달라지고, 스냅샷을 새로 뜰 때마다 대시보드가 덧붙여야 하며, 배포 VM의 DB도 같은 이유로 느리다. 인덱스 하나라 표·뷰·결과가 바뀌지 않는다.
+- **결과(사용자 결정, 2026-11-27, "진행해"):** A. [db/migrations/019_agent_report_incident_index.sql](../db/migrations/019_agent_report_incident_index.sql)(`agent_report_incident_job_idx`). 설계 변경 없음. 배포 VM에는 다음에 켤 때 `db_migrate.py`로 적용한다. 분석가 검토 조회의 인덱스는 잰 문제가 없어 넣지 않았다.
+
