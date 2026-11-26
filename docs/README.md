@@ -25,7 +25,7 @@
 | [eda-design-evidence.md](eda-design-evidence.md) | EDA 결과와 설계 근거(그림 [figures/eda/](figures/eda/)) |
 | [feature-dictionary-v1.md](feature-dictionary-v1.md), [feature-dictionary-v2.md](feature-dictionary-v2.md) | 특징 사전(v1 conn 18개, v2는 프로토콜 로그 24개를 더한 42개) |
 | [ground-truth-v1.md](ground-truth-v1.md) | 정답 에피소드를 만든 방법과 목록(평가 전용) |
-| [lab-attack-detection.md](lab-attack-detection.md) | 실습망 Kali 공격 8종(11회)을 종류별로 잡았는지와 첫 알림까지 걸린 시간, 판정 기준 |
+| [lab-attack-detection.md](lab-attack-detection.md) | 실습망 Kali 공격 8종(13회)을 종류별로 잡았는지와 첫 알림까지 걸린 시간, 판정 기준 |
 
 ## 운영
 
