@@ -1,4 +1,4 @@
-# `zeek_AD` 프로젝트 구조도 (2026-11-13 기준)
+# NBAD 프로젝트 구조도 (2026-11-13 기준, 당시 이름 `zeek_AD`)
 
 현재 코드베이스와 [stage-4-progress.md](stage-4-progress.md), [stage-5-progress.md](stage-5-progress.md), [session-handoff.md](session-handoff.md) 기준으로 정리한 시스템 파이프라인과 PostgreSQL DB 구조입니다.
 

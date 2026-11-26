@@ -1,8 +1,8 @@
-# zeek_AD 한 장 요약
+# NBAD 한 장 요약
 
-Zeek 로그만으로 내부 호스트의 평소와 다른 행동을 찾고 수집부터 조사 큐·보고서·알림까지 자동으로 잇는 시스템이다. 공개 데이터로 모델을 만들고 평가한 뒤 격리된 VMware 실습망에서 실제 트래픽(Kali 공격 + 정상 배경)으로 끝까지 돌려 확인했다. 자세한 내용은 [README](../README.md)에 있다.
+NBAD(Network Behavior Anomaly Detection)는 Zeek 로그만으로 내부 호스트의 평소와 다른 행동을 찾고 수집부터 조사 큐·보고서·알림까지 자동으로 잇는 시스템이다. 공개 데이터로 모델을 만들고 평가한 뒤 격리된 VMware 실습망에서 실제 트래픽(Kali 공격 + 정상 배경)으로 끝까지 돌려 확인했다. 자세한 내용은 [README](../README.md)에 있다.
 
-![zeek_AD 구조](figures/architecture.png)
+![NBAD 구조](figures/architecture.png)
 
 ## 1. 문제
 - 내부망 관제에서 시그니처로 못 잡는 행동(정찰, 측면 이동, beacon, 느린 유출)을 찾고 싶다. 실제 환경에는 공격 라벨이 없다.
@@ -55,7 +55,7 @@ Zeek 로그만으로 내부 호스트의 평소와 다른 행동을 찾고 수�
 - ATT&CK 검색은 BM25와 비교해 hit@5가 높은 Gemini 임베딩(0.938)을 골랐다. 알림은 LLM을 기다리지 않고 템플릿으로 먼저 보낸다.
 - 전송 판단 모델은 그림자 비교에서 공격 관련 사건 11건을 바로 보내지 않아 전송은 정책 규칙에 맡겼다.
 - 배포 묶음 = 세 모델 + 전처리 + 특징 스키마 + 임계값 + 사건 정책 + 코드 해시. 등록 전 재현 검사(차이 0), 교체 → 롤백 → 재교체 확인, worker 장애 복구 시험 9/9 통과.
-- 관리자 대시보드(Java)는 별도 저장소 [prosild/zeek_ad_dashboard](https://github.com/prosild/zeek_ad_dashboard)에 있다.
+- 관리자 대시보드(Java)는 별도 저장소 [nbad-dashboard](https://github.com/prosild/nbad-dashboard)에 있다.
 
 ## 7. 하지 않은 것
 - 실습망 데이터로 다시 학습하지 않았다. 정식 Structured Streaming 대신 파일 단위로 처리한다. Slack은 dry-run이다. 드리프트 감시와 새 환경 임계값 재설정은 없다.
