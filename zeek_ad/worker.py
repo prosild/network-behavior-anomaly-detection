@@ -3,7 +3,8 @@
 캡처 하나 = 채점 작업 하나다. 순서:
 1. 작업 시작 전에 Registry alias를 실제 버전으로 풀어 고정한다. 작업 중 alias가 바뀌어도 이 버전을 쓴다.
 2. 트랜잭션 1: 작업 키(캡처, 입력 manifest 해시, 묶음)로 작업 행을 만든다(running). 이미 succeeded면 건너뛴다.
-3. 채점 → 결합 큐(트랜잭션 밖, 오래 걸림).
+3. 채점 → (set에 queue_eligibility 항목이 있으면) 큐 자격 라벨 → 결합 큐(트랜잭션 밖, 오래 걸림).
+   라벨이 붙은 창은 결합 큐에서 빠지고, 창 점수는 라벨(split)과 함께 모두 저장한다(zeek_ad/queue_eligibility.py).
 4. 트랜잭션 2: 작업 행 잠금 → 창 점수·사건·succeeded 표시를 한 번에 commit한다.
    commit 전에 죽으면 결과는 하나도 남지 않고 작업 행만 running으로 남는다. 다시 돌리면 그 작업을 이어받는다.
 """
@@ -18,6 +19,7 @@ from psycopg.types.json import Jsonb
 
 from zeek_ad.fusion import picked_score
 from zeek_ad.provenance import PROJECT_ROOT, file_record, sha256
+from zeek_ad.queue_eligibility import fingerprint_record
 
 REGISTERED_NAME = "zeekad-fusion"
 
@@ -46,13 +48,31 @@ def resolve_bundle(alias):
             "manifest": manifest, "manifest_sha256": manifest_sha, "model": model.unwrap_python_model()}
 
 
-def input_fingerprint(gold_dir, graph_dir, bounds_path, capture_id):
-    """작업 입력을 가리키는 해시. 입력 manifest(Gold·그래프)와 캡처 경계 파일이 같으면 같은 입력이다."""
+def input_fingerprint(gold_dir, graph_dir, bounds_path, capture_id, queue_eligibility=None):
+    """작업 입력을 가리키는 해시. 입력 manifest(Gold·그래프)와 캡처 경계 파일이 같으면 같은 입력이다.
+
+    queue_eligibility: 큐 자격 규칙을 쓰는 작업이면 queue_eligibility.fingerprint_record 값(규칙 설정·자산 설정·
+    연결 자료 manifest 해시). None이면 기록에 키를 넣지 않는다. 그래서 규칙이 없는 작업(CIC·합성, 옛 리비전)의
+    지문은 이 인자가 생기기 전과 같다.
+    """
     record = {"capture_id": capture_id,
               "gold_manifest": file_record(Path(gold_dir) / "manifest.json")["sha256"],
               "graph_manifest": file_record(Path(graph_dir) / "manifest.json")["sha256"],
               "bounds": sha256(bounds_path)}
+    if queue_eligibility is not None:
+        record["queue_eligibility"] = queue_eligibility
     return hashlib.sha256(json.dumps(record, sort_keys=True).encode("utf-8")).hexdigest(), record
+
+
+def set_input_fingerprint(cfg, capture_id, root=PROJECT_ROOT):
+    """입력 묶음 정의의 set 하나(cfg)로 지문을 계산한다. 채점 worker와 live_agent.revision_for_job이 함께 쓴다.
+
+    경로는 root 기준이다(절대 경로면 그대로). set에 queue_eligibility 항목이 있을 때만 규칙 입력이 지문에 들어간다.
+    """
+    root = Path(root)
+    entry = cfg.get("queue_eligibility")
+    extra = None if entry is None else fingerprint_record(entry, capture_id, root)
+    return input_fingerprint(root / cfg["gold_dir"], root / cfg["graph_dir"], root / cfg["bounds"], capture_id, extra)
 
 
 def upsert_bundle(conn, b):

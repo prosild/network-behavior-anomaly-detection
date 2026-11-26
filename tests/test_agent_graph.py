@@ -4,6 +4,7 @@ langgraph가 필요하므로 zeek-ad 환경에서 실행한다: python -m unitte
 확인하는 것:
 - 판단 모델이 need_more_evidence를 고르면 추가 근거를 한 번 더하고 다시 판단한다. 반복 상한(1회)을 넘지 않는다.
 - analyst_review면 interrupt로 멈추고, 같은 thread_id로 재개하면 결정을 기록하고 끝난다.
+- 종료했다가 다시 연 사건(DD-022): 결정 뒤에 다시 열었으면 dismiss로 다시 종료하지 않고, 결정 전에 다시 열었으면 종료한다.
 - 판단 모델 호출이 실패해도 흐름은 멈추지 않고 정책 규칙대로 전송을 정한다.
 - 정책 규칙이 보냄이면 LLM 보고서 전에 템플릿 알림을 먼저 기록하고, LLM 보고서가 나오면 한 번 더 기록한다(Q47).
 - 이전 작업에서 이미 알린 사건(늘어나 다시 처리하는 사건)은 보고서는 다시 쓰고 Slack에는 기록하지 않는다(DD-016 결정 4).
@@ -23,6 +24,8 @@ from zeek_ad.quota import Breaker, QuotaExhausted
 FACTS = [{"id": "F01", "name": "queue_rank", "value": 3},
          {"id": "F02", "name": "also_flagged_by_models", "value": ["tail_rarity_v2"]},
          {"id": "F03", "name": "connection_count", "value": 12}]
+# reopened_after_review 질의의 핵심 조건. 하나라도 빠지거나 뒤집히면 FakeConn이 질의를 알아보지 못해 시험이 실패한다
+REOPEN_CONDITIONS = ("h.from_status = 'closed'", "h.to_status = 'investigating'", "h.changed_at > r.decided_at")
 POLICY = {"policy_id": "policy.v1", "mandatory_send": {"max_queue_rank": 5, "min_flagging_models": 2},
           "otherwise": "hold"}
 
@@ -33,6 +36,7 @@ class FakeConn:
     def __init__(self):
         self.calls = []
         self.status = "open"
+        self.reopened_after_review = False    # 검토 결정 뒤에 종료 → 확인 중(재개) 이력이 있는가(migration 018)
 
     def execute(self, sql, params=()):
         self.calls.append((" ".join(sql.split()), params))
@@ -42,6 +46,8 @@ class FakeConn:
             result.fetchone.return_value = (t, t)
         elif "coalesce((SELECT status" in sql:
             result.fetchone.return_value = (self.status,)
+        elif all(c in " ".join(sql.split()) for c in REOPEN_CONDITIONS):
+            result.fetchone.return_value = (self.reopened_after_review,)
         else:
             result.fetchone.return_value = None
         if "transition_incident" in sql:
@@ -141,6 +147,43 @@ class GraphPathTest(unittest.TestCase):
         state = graph.invoke(Command(resume={"action": "confirm", "analyst": "a1", "note": "확인"}), cfg)
         self.assertFalse([c for c in self.conn.calls if "transition_incident" in c[0]])
         self.assertEqual(state["trace"][-1]["transitions"], [])
+
+    def test_dismiss_does_not_close_incident_reopened_after_decision(self):
+        # 결정(dismiss) 뒤 재개 전에 대시보드에서 종료했다가 다시 열었다(DD-022): 옛 결정으로 다시 종료하지 않는다
+        self.mocks["call_decision"].side_effect = [decision("analyst_review")]
+        graph, cfg, _ = self.run_graph(InMemorySaver(), thread="t3")
+        self.conn.status, self.conn.reopened_after_review = "investigating", True
+        state = graph.invoke(Command(resume={"action": "dismiss", "analyst": "a1", "note": "오탐"}), cfg)
+        self.assertFalse([c for c in self.conn.calls if "transition_incident" in c[0]])
+        self.assertEqual(state["trace"][-1]["transitions"], [])
+        self.assertTrue(state["trace"][-1]["kept_reopened"])
+        self.assertEqual(self.conn.status, "investigating")
+        self.assertFalse([c for c in self.mocks["record_delivery"].call_args_list if c.args[3].startswith("status:")])
+
+    def test_dismiss_closes_incident_reopened_before_decision(self):
+        # 다시 연 뒤에 내린 dismiss는 사람의 나중 판단이다: 확인 중은 건너뛰고 종료(오탐)만 한다
+        self.mocks["call_decision"].side_effect = [decision("analyst_review")]
+        graph, cfg, _ = self.run_graph(InMemorySaver(), thread="t4")
+        self.conn.status = "investigating"                        # 다시 연 사건(결정보다 앞선 재개라 False)
+        state = graph.invoke(Command(resume={"action": "dismiss", "analyst": "a1", "note": "오탐"}), cfg)
+        moves = [c[1][2:6] for c in self.conn.calls if "transition_incident" in c[0]]
+        self.assertEqual(moves, [("closed", "a1", "오탐", "false_positive")])
+        reopen_checks = [c[1] for c in self.conn.calls if all(k in c[0] for k in REOPEN_CONDITIONS)]
+        self.assertEqual(reopen_checks, [(1, "cic17-fri|192.168.10.5|originator|1499441700")])
+        self.assertFalse(state["trace"][-1]["kept_reopened"])
+
+    def test_reopened_after_review_query_conditions(self):
+        # 질의 문자열 단언: 재개 이력(closed → investigating)이 이 검토의 결정 시각보다 뒤인 경우만 센다
+        conn = FakeConn()
+        conn.reopened_after_review = True
+        self.assertTrue(agent_graph.reopened_after_review(conn, 9, "cap|10.0.0.1|originator|1"))
+        sql, params = conn.calls[0]
+        for condition in REOPEN_CONDITIONS:
+            self.assertIn(condition, sql)
+        self.assertIn("JOIN analyst_review r ON r.job_id = %s AND r.incident_id = h.incident_id", sql)
+        self.assertIn("WHERE h.incident_id = %s", sql)
+        self.assertNotIn("h.changed_at < r.decided_at", sql)
+        self.assertEqual(params, (9, "cap|10.0.0.1|originator|1"))
 
     def test_decision_failure_uses_policy(self):
         self.mocks["call_decision"].side_effect = [decision(None, error="call: TimeoutError")]

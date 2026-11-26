@@ -9,11 +9,11 @@
 | 문서 | 내용 |
 | --- | --- |
 | [FINAL_PROJECT_DESIGN.md](../FINAL_PROJECT_DESIGN.md) | 구현 기준인 최종 설계. 2.2절 표에 이후 설계 결정(DD) 목록이 있다. DD가 본문보다 우선한다 |
-| [design-decisions/](design-decisions/) | 설계 결정 DD-001\~020. 결정마다 배경, 결정, 확인한 것, 한계를 적었다 |
+| [design-decisions/](design-decisions/) | 설계 결정 DD-001\~022. 결정마다 배경, 결정, 확인한 것, 한계를 적었다 |
 | [design-discussion-log.md](design-discussion-log.md) | 설계 질문·이의와 판단 근거(Q1\~). 설계를 바꾸지 않은 경우도 적었다 |
 | [IMPLEMENTATION_CHECKLIST.md](../IMPLEMENTATION_CHECKLIST.md) | 단계별 검증 조건(V1\~V7) |
 | [final-design-verification-results.md](../final-design-verification-results.md) | 설계 확정 전 독립 검증 결과(2026-11-03) |
-| [project-architecture-mermaid.md](project-architecture-mermaid.md) | 파이프라인과 DB 구조도(2026-11-13 기준. 이후 바뀐 것은 README 구조도와 DD-012\~020) |
+| [project-architecture-mermaid.md](project-architecture-mermaid.md) | 파이프라인과 DB 구조도(2026-11-13 기준. 이후 바뀐 것은 README 구조도와 DD-012\~022) |
 
 ## 데이터·특징·정답
 
@@ -24,6 +24,7 @@
 | [eda-design-evidence.md](eda-design-evidence.md) | EDA 결과와 설계 근거(그림 [figures/eda/](figures/eda/)) |
 | [feature-dictionary-v1.md](feature-dictionary-v1.md), [feature-dictionary-v2.md](feature-dictionary-v2.md) | 특징 사전(v1 conn 18개, v2는 프로토콜 로그 24개를 더한 42개) |
 | [ground-truth-v1.md](ground-truth-v1.md) | 정답 에피소드를 만든 방법과 목록(평가 전용) |
+| [lab-attack-detection.md](lab-attack-detection.md) | 실습망 Kali 공격 8종(11회)을 종류별로 잡았는지와 첫 알림까지 걸린 시간, 판정 기준 |
 
 ## 운영
 
@@ -45,6 +46,7 @@
 | [dashboard-handoff-2026-11-19.md](dashboard-handoff-2026-11-19.md) | 2026-11-18\~19 변경 사항 전달 |
 | [dashboard-handoff-2026-11-21.md](dashboard-handoff-2026-11-21.md) | 2026-11-21 변경 사항 전달(모델·수집 구간 표시 이름, LLM 요청 모델) |
 | [dashboard-handoff-2026-11-23.md](dashboard-handoff-2026-11-23.md) | 2026-11-23 Slack 스레드 열 질문 회신(도입 전 기록의 null, 새 캡처 표시) |
+| [dashboard-handoff-2026-11-26.md](dashboard-handoff-2026-11-26.md) | 2026-11-26 외부 피드백 회신(Kali 공격 정답 기록, 탐지 여부·걸린 시간 표, 정탐 예시 사건) |
 
 ## 진행 기록
 
@@ -55,7 +57,7 @@
 | [stage-0-progress.md](stage-0-progress.md) | 0. 입력 검사, 내부 자산 판정, 5분 창과 학습/보류 분할, 실행 환경 |
 | [stage-1-progress.md](stage-1-progress.md) | 1. Zeek 실행 환경 고정과 재현, 5일 Zeek 처리 |
 | [stage-2-progress.md](stage-2-progress.md) | 2. Bronze → Silver(PySpark), 캡처 시각 범위, 역할과 창 라벨, 특징 사전 |
-| [stage-3-progress.md](stage-3-progress.md) | 3. 정답 에피소드, 평가기, 기준선·IF, Transformer, TGN, 합성 APT, 결합 |
+| [stage-3-progress.md](stage-3-progress.md) | 3. 정답 에피소드, 평가기, 기준선·IF, Transformer, TGN, 합성 패턴, 결합 |
 | [stage-4-progress.md](stage-4-progress.md) | 4. PostgreSQL, MLflow Registry 배포 묶음, 추론 worker와 장애 복구, 근거 API |
 | [stage-5-progress.md](stage-5-progress.md) | 5. ATT&CK RAG, LLM 보고서·검증, 전송 판단, Slack dry-run, LangGraph, 사건 상태 |
 | [stage-6-progress.md](stage-6-progress.md) | 6. 파일 단위 자동 파이프라인, VMware 배포, 실습망 Kali 시험과 정상 배경 |

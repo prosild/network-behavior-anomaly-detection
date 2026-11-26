@@ -422,6 +422,7 @@ $DC --profile app exec -T pipeline python scripts/check_bundle.py --capture lab-
 
 ## 끄고 켜기
 - 끌 때: 배포 VM에서 `sudo poweroff`(또는 VMware `VM → Power → Shut Down Guest`). 전원 끄기(`Power Off`)는 DB가 정리되지 않은 채 꺼지므로 쓰지 않는다.
+- **일시 중지(Suspend)는 쓰지 않는다.** 재개할 때 네트워크가 내려갔다 올라오면서 Docker 브리지의 IPv4 주소가 사라진다. 컨테이너끼리는 통신해 겉으로는 정상인데 밖으로 나가지 못해 Gemini 호출이 모두 연결 오류로 실패한다(2026-11-26, [단계 7 진행 기록](stage-7-progress.md) 열여덟째 작업). 재개했다면 `ip -br addr | grep br-`로 브리지에 `172.x.0.1/16` 주소가 있는지 보고, 없으면 `sudo systemctl restart docker`를 하거나 `$DC --profile app down` 뒤 `$DC --profile app up -d`로 네트워크를 다시 만든다(데이터는 볼륨에 남는다).
 - 켤 때: VM을 켜면 Docker 서비스가 스스로 올라온다. `ssh zeekad-vm` → `cd ~/zeek_AD` → `DC=…` → `$DC --profile app ps`로 확인한다.
 
 ## 알아 둘 한계

@@ -20,7 +20,7 @@ PCAP → Zeek → Silver → Gold → 그래프 순서로 만든다.
 | [build_sequences.py](build_sequences.py) | Gold 창 → Transformer 입력 시퀀스 |
 | [build_tgn_events.py](build_tgn_events.py), [build_tgn_dataset.py](build_tgn_dataset.py) | 연결 이벤트 표 → TGN 시간 그래프 데이터 |
 | [build_ground_truth.py](build_ground_truth.py) | 동결한 정답 에피소드 조건을 Silver에 실행해 연결·창 대응표를 만든다(평가 전용) |
-| [build_synthetic_zeek.py](build_synthetic_zeek.py) | 합성 APT 패턴을 화\~금 Zeek 로그 사본에 주입(DD-008) |
+| [build_synthetic_zeek.py](build_synthetic_zeek.py) | 합성 패턴을 화\~금 Zeek 로그 사본에 주입(DD-008) |
 | [build_eda_part1.py](build_eda_part1.py), [build_eda_part2.py](build_eda_part2.py) | EDA 그림과 통계([docs/eda-design-evidence.md](../docs/eda-design-evidence.md)) |
 | [draw_architecture.py](draw_architecture.py) | README 구조도(`docs/figures/architecture.png`) |
 
@@ -36,6 +36,9 @@ PCAP → Zeek → Silver → Gold → 그래프 순서로 만든다.
 | [build_nat_diagnostic.py](build_nat_diagnostic.py), [build_new_peer_baseline.py](build_new_peer_baseline.py), [build_first_seen.py](build_first_seen.py), [run_detector.py](run_detector.py) | 진단용 자명한 기준선·행동 탐지기(DD-006) |
 | [diagnose_long_connections.py](diagnose_long_connections.py) | 긴 연결이 상위 점수 창을 차지하는지 진단 |
 | [summarize_eval.py](summarize_eval.py) | 모델별 Recall@N과 bootstrap 95% 구간 표 |
+| [check_lab_truth.py](check_lab_truth.py) | 실습망 정답 설정(lab-attacks.v1)의 관측값이 로컬 conn 로그에 규칙을 적용한 결과와 같은지 확인(평가 전용) |
+| [build_lab_detection.py](build_lab_detection.py) | VM DB 내보내기로 실습망 공격 종류별 탐지 여부·걸린 시간 표(`detection.json`·`detection.md`, 비율은 내지 않음) |
+| [measure_queue_eligibility.py](measure_queue_eligibility.py) | VM DB 내보내기와 로컬 conn 로그로 큐 자격 규칙(브로드캐스트·멀티캐스트행 연결만 있는 창 빼기) 전후의 조사 큐 비교. 먼저 저장된 창 점수로 DB 큐를 재현한다(`--baseline-silver`로 상한 출처도 다시 계산) |
 
 ## 3. 저장·배포·MLOps (단계 4·7)
 
@@ -43,6 +46,7 @@ PCAP → Zeek → Silver → Gold → 그래프 순서로 만든다.
 | --- | --- |
 | [make_env.py](make_env.py) | `deploy/.env`를 무작위 비밀번호로 만든다(덮어쓰지 않음) |
 | [db_migrate.py](db_migrate.py) | `db/migrations/*.sql`을 번호 순서로 적용하고 해시를 남긴다 |
+| [verify_incident_reopen.py](verify_incident_reopen.py) | 종료한 사건 다시 열기(`dashboard.reopen_incident`, migration 018, DD-022)와 `transition_incident`의 역방향 거부를 실제 사건 하나로 트랜잭션 안에서 해 보고 ROLLBACK(DB에 남기지 않음) |
 | [add_dashboard_rw.py](add_dashboard_rw.py), [add_dashboard_app.py](add_dashboard_app.py) | 이미 초기화된 DB에 대시보드 계정·DB를 더한다 |
 | [migrate_mlflow_to_pg.py](migrate_mlflow_to_pg.py), [mlflow_ui.py](mlflow_ui.py) | MLflow 백엔드를 PostgreSQL로 옮기기(한 번), MLflow 화면 |
 | [build_bundle.py](build_bundle.py) | 배포 묶음을 만들고 CIC 5일 재현 검사(`--fusion`으로 결합 설정 선택) |
@@ -83,8 +87,8 @@ RAG, LLM 보고서, 전송 판단, LangGraph를 다룬다.
 | [lab_scenario.sh](lab_scenario.sh) | Kali 시험 시나리오(5분 칸마다 활동 하나: ping·nmap) |
 | [lab_beacon.sh](lab_beacon.sh) | 비커닝(C2 신호) 생성기: 침해 호스트가 C2에 고정 간격(+지터)으로 짧은 연결 반복(DD-020). 여러 창에 걸친 조용한 공격 |
 | [lab_normal_client.sh](lab_normal_client.sh) | 타깃 정상 배경 생성기: 여러 목적지·포트에 불규칙한 간격으로 웹 요청(DD-020). 비커닝과 대비되는 originator 기준 |
-| [lab_exfil.sh](lab_exfil.sh) | 느린 유출 생성기: 침해 호스트가 C2로 큰 데이터를 창마다 나눠 올림(DD-020, DD-008 slow_exfil의 실제 버전). 연결은 적고 바이트가 큰 유형 |
-| [lab_lateral.sh](lab_lateral.sh) | 측면 이동 생성기: pivot이 여러 내부 호스트의 SMB(445)로 퍼짐(DD-020). 여러 호스트의 한 포트 fan-out, TGN(관계적 이상) 시험 |
+| [lab_exfil.sh](lab_exfil.sh) | 분할 유출 생성기: 침해 호스트가 C2로 큰 데이터를 창마다 나눠 올림(DD-020, DD-008 slow_exfil의 실제 버전). 연결은 적고 바이트가 큰 유형 |
+| [lab_lateral.sh](lab_lateral.sh) | SMB 공유 탐색 생성기: 한 호스트가 여러 내부 주소의 SMB(445) 공유를 조회(DD-020). 여러 주소의 한 포트 fan-out, TGN(관계적 이상) 시험 |
 | [lab_bruteforce.sh](lab_bruteforce.sh) | SSH 무차별 대입 생성기: 타깃 22에 연결·인증을 빠르게 반복(DD-020, TA0006). 한 호스트 한 포트에 연결 쏟아지는 유형 |
 | [lab_dns_tunnel.sh](lab_dns_tunnel.sh) | DNS 터널 생성기: 질의자가 C2 도메인의 긴 무작위 하위 도메인을 DNS 서버에 질의(DD-020, DD-008 dns_tunnel의 실제 버전). 흔한 프로토콜에 숨는 조용한 유형 |
 | [build_lab_background.py](build_lab_background.py), [lab_replay.sh](lab_replay.sh) | 정상 배경 PCAP 만들기와 재생(DD-017) |

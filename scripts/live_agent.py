@@ -38,14 +38,16 @@ CONFIG = PROJECT_ROOT / "configs" / "pipeline" / "live.v1.json"
 
 
 def revision_for_job(capture_dir, capture_id, input_sha):
-    """입력 지문이 같은 리비전 폴더. 없으면 None. 지문은 채점 worker가 작업을 만들 때 쓴 것과 같은 함수로 계산한다."""
-    from zeek_ad.worker import input_fingerprint
+    """입력 지문이 같은 리비전 폴더. 없으면 None. 지문은 채점 worker가 작업을 만들 때 쓴 것과 같은 함수로 계산한다.
+
+    큐 자격 규칙 항목(queue_eligibility)이 있는 리비전은 규칙 입력까지 넣은 지문, 없는 옛 리비전은 예전 지문이다.
+    """
+    from zeek_ad.worker import set_input_fingerprint
 
     for inputs in sorted(Path(capture_dir).glob("rev-*/worker-inputs.json")):
         cfg = json.loads(inputs.read_text(encoding="utf-8"))["sets"]["live"]
         try:
-            sha, _ = input_fingerprint(PROJECT_ROOT / cfg["gold_dir"], PROJECT_ROOT / cfg["graph_dir"],
-                                       PROJECT_ROOT / cfg["bounds"], capture_id)
+            sha, _ = set_input_fingerprint(cfg, capture_id, PROJECT_ROOT)
         except FileNotFoundError:
             continue                      # 계산이 중간에 끊긴 리비전
         if sha == input_sha:

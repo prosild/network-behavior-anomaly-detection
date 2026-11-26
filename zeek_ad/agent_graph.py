@@ -27,6 +27,10 @@
 - apply_status: 분석가 결정을 사건 상태로 옮긴다(DD-010, DB 함수 dashboard.transition_incident).
   confirm → 열림에서 확인 중으로. dismiss → 확인 중을 거쳐 종료(오탐)로(건너뛰기를 막으므로 두 번 바꾼다).
   이미 그 상태면(대시보드에서 먼저 바꿈) 다시 바꾸지 않는다. 바꾸면 Slack 후속 알림을 기록한다(dry-run).
+  종료한 사건 다시 열기(DD-022, migration 018): 대시보드만 별도 함수 dashboard.reopen_incident로 다시 연다(worker는 실행 권한이
+  없다). transition_incident는 앞으로만 가므로 apply_status가 종료한 사건을 다시 여는 일은 없다. 다시 연 사건은 확인 중이라
+  confirm은 바꿀 것이 없다. dismiss는 앞으로 가는 전이(확인 중 → 종료)로 다시 닫을 수 있으므로, 결정 뒤에 다시 열었으면
+  종료하지 않는다(사람의 나중 판단을 덮지 않는다). 결정 전에 다시 열었으면 그 결정대로 종료한다.
   재개된 그래프가 checkpoint에 저장된 상태(사건·보고서)를 이어받아 하는 단계다.
 - analyst_review: interrupt()로 멈춘다. 상태는 checkpoint(PostgreSQL langgraph 스키마)에 남는다.
   분석가가 confirm(조사 진행) 또는 dismiss(오탐 종료)를 넣어 같은 thread_id로 재개하면 analyst_review 표에 기록하고 끝난다.
@@ -322,7 +326,7 @@ def build_graph(res, checkpointer=None):
         steps = [("investigating", None)]
         if review["action"] == "dismiss":
             steps.append(("closed", "false_positive"))
-        done = []
+        done, kept_reopened = [], False
         if persist:
             for to, resolution in steps:
                 # 상태는 사건 ID에 붙는다(migration 012). 다른 작업에서 이미 바꿨어도 여기서 보인다.
@@ -332,6 +336,10 @@ def build_graph(res, checkpointer=None):
                 order = ["open", "investigating", "closed"]
                 if order.index(now) >= order.index(to):
                     continue                      # 이미 그 상태이거나 더 나아감(대시보드에서 먼저 바꿈)
+                if to == "closed" and reopened_after_review(conn, state["job_id"], state["incident_id"]):
+                    # 결정 뒤에 분석가가 reopen_incident로 다시 열었다. 늦게 도착한 옛 결정으로 다시 닫지 않는다(DD-022)
+                    kept_reopened = True
+                    continue
                 conn.execute("SELECT dashboard.transition_incident(%s, %s, %s, %s, %s, %s)",
                              (state["job_id"], state["incident_id"], to, actor, reason, resolution))
                 inc = incident_row(conn, state["job_id"], state["incident_id"])
@@ -339,7 +347,8 @@ def build_graph(res, checkpointer=None):
                                 status_message(inc, to, resolution, actor, reason, res["slack_config"]),
                                 res["slack_config"])
                 done.append(to)
-        return {"trace": _trace("apply_status", t0, action=review["action"], transitions=done)}
+        return {"trace": _trace("apply_status", t0, action=review["action"], transitions=done,
+                                kept_reopened=kept_reopened)}
 
     def after_decide(state):
         if state["decision"]["choice"] == "need_more_evidence" and state["evidence_rounds"] < MAX_EVIDENCE_ROUNDS:
@@ -370,6 +379,22 @@ def build_graph(res, checkpointer=None):
     g.add_edge("analyst_review", "apply_status")
     g.add_edge("apply_status", END)
     return g.compile(checkpointer=checkpointer)
+
+
+def reopened_after_review(conn, job_id, incident_id):
+    """분석가 검토 결정 뒤에 종료한 사건을 다시 열었는가(closed → investigating 이력).
+
+    이 이력 행은 대시보드가 dashboard.reopen_incident(migration 018)로 다시 열 때만 생긴다.
+    흐름 재개(apply_status)가 늦어지는 사이(감시 주기, 재개 실패 뒤 명령줄 재개) 분석가가 대시보드에서 종료했다가 다시 열 수 있다.
+    그때 앞서 넣은 dismiss로 다시 종료하면 사람이 나중에 한 판단(다시 열기)을 덮는다. 결정 시각(decided_at)보다
+    나중의 재개 이력이 있으면 True다. 결정 뒤에 다시 연 적이 없거나 결정 시각이 없으면 False다.
+    """
+    return conn.execute("""SELECT EXISTS (
+                               SELECT 1 FROM incident_status_history h
+                               JOIN analyst_review r ON r.job_id = %s AND r.incident_id = h.incident_id
+                               WHERE h.incident_id = %s AND h.from_status = 'closed' AND h.to_status = 'investigating'
+                                 AND h.changed_at > r.decided_at)""",
+                        (job_id, incident_id)).fetchone()[0]
 
 
 def incident_row(conn, job_id, incident_id):

@@ -76,7 +76,7 @@ def main():
     xs = [0.2, 2.65, 5.1, 7.65, 10.35]
     ws = [2.15, 2.15, 2.25, 2.4, 2.45]
     texts = ["PCAP 5일\n원본 패킷", "Zeek\nconn·dns·http·ssl…",
-             "Silver → Gold\n5분 창 · 이벤트 그래프", "월요일 정상으로 학습\n화~금 · 합성 APT로 평가",
+             "Silver → Gold\n5분 창 · 이벤트 그래프", "월요일 정상으로 학습\n화~금 · 합성 패턴으로 평가",
              "MLflow Registry\n배포 묶음(모델+설정)"]
     for x, w, t in zip(xs, ws, texts):
         box(ax, x, y1, w, h, t, "build")
