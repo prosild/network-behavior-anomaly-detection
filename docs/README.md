@@ -7,11 +7,11 @@
 | 문서 | 내용 |
 | --- | --- |
 | [FINAL_PROJECT_DESIGN.md](../FINAL_PROJECT_DESIGN.md) | 구현 기준인 최종 설계. 2.2절 표에 이후 설계 결정(DD) 목록이 있다. DD가 본문보다 우선한다 |
-| [design-decisions/](design-decisions/) | 설계 결정 DD-001\~019. 결정마다 배경, 결정, 확인한 것, 한계를 적었다 |
+| [design-decisions/](design-decisions/) | 설계 결정 DD-001\~020. 결정마다 배경, 결정, 확인한 것, 한계를 적었다 |
 | [design-discussion-log.md](design-discussion-log.md) | 설계 질문·이의와 판단 근거(Q1\~). 설계를 바꾸지 않은 경우도 적었다 |
 | [IMPLEMENTATION_CHECKLIST.md](../IMPLEMENTATION_CHECKLIST.md) | 단계별 검증 조건(V1\~V7) |
 | [final-design-verification-results.md](../final-design-verification-results.md) | 설계 확정 전 독립 검증 결과(2026-11-03) |
-| [project-architecture-mermaid.md](project-architecture-mermaid.md) | 파이프라인과 DB 구조도(2026-11-13 기준. 이후 바뀐 것은 README 구조도와 DD-012\~019) |
+| [project-architecture-mermaid.md](project-architecture-mermaid.md) | 파이프라인과 DB 구조도(2026-11-13 기준. 이후 바뀐 것은 README 구조도와 DD-012\~020) |
 
 ## 데이터·특징·정답
 
