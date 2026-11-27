@@ -38,7 +38,7 @@ incident_queue (v1) ── 사건 하나 = (job_id, incident_id)
 | `llm_seconds` | double | LLM 호출 시간(초) |
 | `llm_input_tokens`, `llm_output_tokens`, `llm_thinking_tokens` | integer | 토큰 수. 호출 실패면 null |
 | `llm_error` | text | 호출 오류 종류. 없으면 null |
-| `zeekad_attack_candidates` | jsonb | 검색으로 찾은 ATT&CK 후보 `[{attack_id, name, tactics}]`. **가설이다.** 보고서의 `attack_ids`는 이 안에서만 나온다 |
+| `zeekad_attack_candidates` | jsonb | 검색으로 찾은 ATT&CK 후보 `[{attack_id, name, tactics}]`. **가설이다.** 보고서의 `attack_ids`는 이 안에서만 나온다. `tactics`는 ATT&CK Enterprise 20.1의 짧은 이름이다. 이 판에는 `defense-evasion`이 없고, 그 ID(TA0005)를 이어받은 `stealth`와 새 전술 `defense-impairment`(TA0112)가 있다(검색 문서 706건 중 151건·57건, 2026-11-27 확인) |
 | `zeekad_source_run` | text | 만든 실행(재현용). 예: `20261117T020850Z-eval`, `agent-graph.v1` |
 | `created_at` | timestamptz | 만든 시각 |
 | `zeekad_facts` | jsonb | 보고서를 쓸 때 LLM에 보낸 사실 목록 `[{id, name, value}]`. 가명·상대 초로 되어 있고 실제 IP는 없다 |
@@ -163,7 +163,7 @@ SELECT dashboard.transition_incident(
 ```
 
 - 한 칸씩만 앞으로 간다: `open → investigating → closed`. 되돌리기와 건너뛰기는 함수가 거부한다(SQLSTATE `22023`). 사건이 없으면 `02000`이다. 종결한 사건을 다시 여는 것은 이 함수가 아니라 아래 "쓰기: 종결한 사건 다시 열기"의 함수로 한다.
-- `actor`와 `reason`은 비울 수 없다. 오류 메시지는 한국어 문장이라 그대로 사용자에게 보여 줘도 된다.
+- `actor`와 `reason`은 비울 수 없다. 오류 메시지는 한국어 문장이라 그대로 보여 줘도 되지만 zeek_AD의 용어("사건", "화면")로 쓰여 있다. 화면 용어(예: "인시던트")와 맞추려면 문장 대신 SQLSTATE(`02000` 대상 없음, `22023` 값·상태 오류)로 화면 문구를 정한다. 문장은 바뀔 수 있고 SQLSTATE는 바뀌지 않는다(2026-11-27, 아래 재개·검토 결정 함수도 같다).
 - 같은 사건을 두 사람이 동시에 바꾸면 하나만 성공한다. 다른 하나는 "허용되지 않는 상태 변경"으로 거부된다(행 잠금).
 - 화면 권장: 버튼은 지금 상태에서 갈 수 있는 다음 상태만 보여 준다. 종료 버튼은 결론 세 가지 중 하나를 고르게 한다.
 
