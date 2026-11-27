@@ -957,7 +957,7 @@
 - **확인(Claude):** 같은 뷰의 분석가 검토 조회(`analyst_review`)도 같은 꼴이지만 행이 몇 개뿐이라 잰 문제가 없다. Slack 알림 여부(`EXISTS`)는 행마다가 아니라 해시 세미 조인 한 번이다(대시보드의 계획 분석).
 - **선택지(Claude 제시):** A. zeek_AD에 migration 019로 같은 인덱스를 넣는다(이름을 대시보드 사본과 맞춤). B. 대시보드 사본에만 둔다.
 - **판단(Claude):** A를 권했다. 뷰는 zeek_AD의 계약이다. 사본에만 넣으면 공개 DB의 구조가 원본과 달라지고, 스냅샷을 새로 뜰 때마다 대시보드가 덧붙여야 하며, 배포 VM의 DB도 같은 이유로 느리다. 인덱스 하나라 표·뷰·결과가 바뀌지 않는다.
-- **결과(사용자 결정, 2026-11-27, "진행해"):** A. [db/migrations/019_agent_report_incident_index.sql](../db/migrations/019_agent_report_incident_index.sql)(`agent_report_incident_job_idx`). 설계 변경 없음. 배포 VM에는 다음에 켤 때 `db_migrate.py`로 적용한다. 분석가 검토 조회의 인덱스는 잰 문제가 없어 넣지 않았다.
+- **결과(사용자 결정, 2026-11-27, "진행해"):** A. [db/migrations/019_agent_report_incident_index.sql](../db/migrations/019_agent_report_incident_index.sql)(`agent_report_incident_job_idx`). 설계 변경 없음. 배포 VM에는 2026-11-27에 적용했다(최신 큐 조회 결과 md5 같음, 약 150ms → 22ms). 분석가 검토 조회의 인덱스는 잰 문제가 없어 넣지 않았다.
 
 ### Q88. 운영 현황의 "모델 판정: 표본 부족 · 판정 5/2,277건(0.2%)"은 모델이 5건만 잡았다는 뜻인가 (2026-11-27)
 - **질문(사용자):** 대시보드 운영 현황 페이지의 모델 판정 카드에 "표본 부족 · 판정 5/2,277건(0.2%)"이 나온다. 모델이 잡은 것이 5건뿐이라는 뜻이면 AI 모델의 의미가 없지 않나.
