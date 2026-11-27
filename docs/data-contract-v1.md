@@ -87,6 +87,8 @@
 | `GET /api/v1/jobs/{job_id}/incidents/{rank}` | 사건 근거: 모델별 점수·임계값, 관측된 자산 이름(출처 포함), 연결 요약(`evidence.v1`) |
 
 `evidence.v1`(ECS 이름의 JSON): `host.ip`, `event.start/end`, `connection_count`, `network.transport/protocol/bytes`, `zeek_conn_state`, `peers.top`, `destination_ports.top`, `protocol_logs`(dns·http·tls·ssh·ftp·smb·kerberos·dce_rpc·ntlm 수), `representative_connections`(최대 10개, `zeek.uid`·`source`·`destination`·`network`), `limits`.
+
+`limits`는 근거를 만들 때(작업마다) 함께 저장한 zeek_AD의 한국어 문장이다(`zeek_ad/evidence.py`의 `LIMITS`). zeek_AD의 용어("연결", "페이로드 바이트가 … 큰(부푼)")로 쓰여 화면 용어와 다를 수 있고, 문장을 고쳐도 이미 저장된 근거는 바뀌지 않는다. 화면에서 바꿔 보여 줄 때는 문장이 아니라 문장이 가리키는 키(`network.zeekad_payload_bytes_inflated`)를 기준으로 한다(2026-11-27).
 - 바이트는 관측한 IP 바이트다. Zeek 페이로드 바이트가 부푼 연결 수는 `network.zeekad_payload_bytes_inflated`.
 - DNS 질의·HTTP URI·SNI 같은 문자열은 v1에 없다(비신뢰 입력, 설계 9.1절).
 - 원본 연결 전체는 Parquet 이벤트 표에 있고, 대표 연결의 `zeek.uid`로 찾는다.
