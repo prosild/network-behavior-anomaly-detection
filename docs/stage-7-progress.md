@@ -610,5 +610,12 @@
 ## 스물두째 작업: 최신 큐 뷰의 보고서 조회 인덱스(2026-11-27, Q87)
 - 대시보드 세션이 새 공개 스냅샷에서 목록·상세가 3\~3.7배 느려진 원인을 찾아 알렸다. 계약 뷰 `dashboard.latest_incident_queue`가 사건 행마다 가장 최근 보고서를 찾는데, `agent_report`에 맞는 인덱스가 없어 행마다 기본 키 인덱스 전체를 훑는다. 보고서가 2,857행으로 늘며(대부분 숨김 캡처 `lab-20261123`) 드러났다.
 - [db/migrations/019_agent_report_incident_index.sql](../db/migrations/019_agent_report_incident_index.sql): 인덱스 `agent_report_incident_job_idx`(`incident_id`, `job_id DESC`) 하나. 표·뷰·결과는 그대로다. 이름은 대시보드의 공개용 사본과 맞췄다.
-- 대시보드가 일회용 DB에서 결과가 같고 무거운 문장이 133\~180ms → 16\~61ms가 되는 것을 확인했다. 이 PC에는 DB가 없어 zeek_AD 쪽에서는 적용해 보지 못했다. **배포 VM에는 아직 적용하지 않았다.** 다음에 켤 때 배포 VM의 `~/zeek_AD`에서 `set -a && . deploy/.env && set +a && $DC --profile app run --rm -T --no-deps -e ZEEKAD_OWNER_PASSWORD pipeline python scripts/db_migrate.py`로 적용한다(2026-11-26에 018을 이 명령으로 적용했다. 파일을 VM에 먼저 올린다).
+- 대시보드가 일회용 DB에서 결과가 같고 무거운 문장이 133\~180ms → 16\~61ms가 되는 것을 확인했다. 이 PC에는 DB가 없어 zeek_AD 쪽에서는 적용해 보지 못했다. 배포 VM에는 2026-11-27 07:39 UTC에 적용했다. 이미지가 `db/`를 복사하므로 순서는 파일 올리기(rsync) → `$DC --profile app build pipeline` → `set -a && . deploy/.env && set +a && $DC --profile app run --rm -T --no-deps -e ZEEKAD_OWNER_PASSWORD pipeline python scripts/db_migrate.py` → `up -d`다. 적용 기록(`schema_migrations`)의 sha256이 파일과 같다.
+
+  | 배포 VM DB, 최신 큐 뷰 2,560행 | 적용 전 | 적용 뒤 |
+  | --- | --- | --- |
+  | 결과 md5(오늘 캡처 제외) | `0cd17c86…` | 같음 |
+  | `SELECT count(zeekad_report_kind)` 3회 | 151\~162ms | 22ms |
+  | `SELECT DISTINCT zeekad_role` 3회 | 149\~157ms | 22\~23ms |
+  | 보고서 표를 읽는 방식(행마다) | 기본 키 인덱스를 거꾸로 훑음, 버퍼 70,838 | 새 인덱스로 바로 찾음, 버퍼 5,612 |
 

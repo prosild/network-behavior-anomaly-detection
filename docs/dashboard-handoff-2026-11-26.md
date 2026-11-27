@@ -208,5 +208,5 @@ SELECT dashboard.reopen_incident(
 - 대시보드가 알린 느려짐(최신 큐 뷰가 사건 행마다 `agent_report`를 훑음)에 맞춰 zeek_AD에 같은 인덱스를 넣었다: `zeekad.agent_report_incident_job_idx` = `agent_report (incident_id, job_id DESC)`. 파일은 `db/migrations/019_agent_report_incident_index.sql`이다.
 - 표·뷰·함수·권한과 조회 결과는 바뀌지 않는다. 데이터 계약의 `latest_incident_queue` 절에 한 줄 적었다.
 - 공개용 사본에 넣는 스크립트는 **같은 이름에 `IF NOT EXISTS`**로 써 달라. 그러면 019가 적용된 VM에서 다음에 뜬 스냅샷에서는 그 스크립트가 아무 일도 하지 않는다. 지금 공개 스냅샷(2026-11-26)에는 019가 없다.
-- 배포 VM에는 다음에 켤 때 적용한다. 그 전에 스냅샷을 새로 뜨면 019가 없으니 사본 스크립트가 필요하다.
+- 배포 VM에는 2026-11-27에 적용했다(최신 큐 조회 결과는 같고 약 150ms → 22ms). 이제 VM에서 뜨는 스냅샷에는 019가 들어 있어 사본 스크립트는 아무 일도 하지 않는다.
 
