@@ -48,17 +48,17 @@ def pick_font():
 
 # 평가 결과: (큐 이름, @10 맞힌 수, @50 맞힌 수, 종류). 종류: main(결합), model, compare(비교), diag(진단 기준선)
 CIC = [
-    ("결합(세 모델)", 8, 14, "main"),
-    ("꼬리 희귀도", 8, 13, "model"),
-    ("Transformer", 8, 11, "model"),
+    ("결합 v1(세 모델)", 8, 14, "main"),
+    ("꼬리 희귀도 v2", 8, 13, "model"),
+    ("Transformer v2", 8, 11, "model"),
     ("TGN", 11, 13, "model"),
-    ("Isolation Forest", 4, 13, "compare"),
+    ("Isolation Forest v2", 4, 13, "compare"),
     ("NAT 주소와의 연결 수", 12, 13, "diag"),
 ]
 SYNTHETIC = [
-    ("결합(세 모델)", 5, 13, "main"),
-    ("꼬리 희귀도", 7, 11, "model"),
-    ("Transformer", 4, 11, "model"),
+    ("결합 v1(세 모델)", 5, 13, "main"),
+    ("꼬리 희귀도 v2", 7, 11, "model"),
+    ("Transformer v2", 4, 11, "model"),
     ("TGN", 2, 9, "model"),
 ]
 TAGS = {"compare": "비교용", "diag": "진단용 기준선"}
@@ -73,11 +73,13 @@ def recall_panel(ax, rows, total, title):
         ax.plot([x10, x50], [y, y], color=AXIS, linewidth=2, zorder=1, solid_capstyle="round")
         ax.scatter([x10], [y], s=90, color=AT10, edgecolor="white", linewidth=2, zorder=3)
         ax.scatter([x50], [y], s=90, color=AT50, edgecolor="white", linewidth=2, zorder=3)
-        # 두 점이 가까우면 라벨을 위아래로 나눈다
-        close = abs(x50 - x10) < 9
-        ax.text(x10, y + (0.32 if close else 0.3), f"{hit10}", ha="center", va="bottom", fontsize=10, color=INK)
-        ax.text(x50, y - 0.32 if close else y + 0.3, f"{hit50}", ha="center",
-                va="top" if close else "bottom", fontsize=10, color=INK)
+        # 두 점이 가까우면 라벨을 점의 왼쪽·오른쪽에 둔다(같은 행에 붙어 보이게)
+        if abs(x50 - x10) < 9:
+            ax.text(x10 - 2.2, y, f"{hit10}", ha="right", va="center", fontsize=10, color=INK)
+            ax.text(x50 + 2.2, y, f"{hit50}", ha="left", va="center", fontsize=10, color=INK)
+        else:
+            ax.text(x10, y + 0.3, f"{hit10}", ha="center", va="bottom", fontsize=10, color=INK)
+            ax.text(x50, y + 0.3, f"{hit50}", ha="center", va="bottom", fontsize=10, color=INK)
         label = name if kind not in TAGS else f"{name}\n({TAGS[kind]})"
         ax.text(-3, y, label, ha="right", va="center", fontsize=11.5 if kind == "main" else 11,
                 fontweight="bold" if kind == "main" else "normal",
@@ -107,10 +109,10 @@ def draw_eval(font):
                plt.Line2D([], [], marker="o", linestyle="", markersize=9, color=AT50, label="상위 50건")]
     fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.03, 0.935), ncol=2, frameon=False,
                fontsize=11, handletextpad=0.3, columnspacing=1.2, labelcolor=INK)
-    fig.text(0.035, 0.015, "점 위 숫자는 잡은 에피소드 수다. 표본이 16·20건이라 모델 사이의 95% 구간이 모두 겹친다. "
-             "NAT 기준선은 CIC 공격이 NAT 주소로 들어오는 구조에 기댄 진단용이다.",
-             fontsize=9.5, color=INK2, ha="left")
-    fig.subplots_adjust(left=0.2, right=0.98, top=0.8, bottom=0.14)
+    fig.text(0.035, 0.015, "숫자는 잡은 에피소드 수다. 표본이 16·20건이라 행동 모델(꼬리 희귀도·Transformer·TGN·결합) 사이의 95% 구간이 모두 겹친다. "
+             "\nNAT 기준선은 CIC 공격이 NAT 주소로 들어오는 구조에 기댄 진단용이다. v2는 특징 버전, 결합 v1은 평가 때의 결합 규칙이다.",
+             fontsize=9.5, color=INK2, ha="left", va="bottom", linespacing=1.5)
+    fig.subplots_adjust(left=0.2, right=0.98, top=0.8, bottom=0.17)
     out = FIGURES / "eval-recall.png"
     fig.savefig(out, dpi=200, facecolor="white")
     plt.close(fig)
@@ -147,7 +149,7 @@ def draw_lab(font):
     chips = fig.add_axes([0.27, 0.2, 0.36, 0.7], sharey=names)
     times = fig.add_axes([0.66, 0.2, 0.31, 0.7], sharey=names)
     n = len(LAB)
-    # 묶음 사이에 틈을 둔다: 퍼지는 공격 4개 위, 조용한 공격 4개 아래
+    # 묶음 사이에 틈을 둔다: 퍼지는 공격 4개 위, 한 상대에 몰리는 공격 4개 아래
     ys = [n - i + (0.6 if kind == "spread" else 0) for i, (_, _, _, kind) in enumerate(LAB)]
     for ax in (names, chips):
         ax.set_xlim(0, 1)
@@ -166,7 +168,7 @@ def draw_lab(font):
             times.text(0.3, y, "잡은 실행 없음", ha="left", va="center", fontsize=9.6, color=INK2)
     group_y = (ys[3] + ys[4]) / 2
     names.text(0.03, ys[0] + 0.75, "퍼지는 공격", ha="left", fontsize=10.5, color=INK2, fontweight="bold")
-    names.text(0.03, group_y - 0.38, "조용한 공격", ha="left", fontsize=10.5, color=INK2, fontweight="bold")
+    names.text(0.03, group_y - 0.38, "한 상대에 몰리는 공격", ha="left", fontsize=10.5, color=INK2, fontweight="bold")
     for ax in (names, chips, times):
         ax.axhline(group_y, color=GRID, linewidth=1, xmin=0, xmax=1)
     chips.text(0.05, ys[0] + 0.75, "실행마다 판정", ha="left", fontsize=10.5, color=INK2, fontweight="bold")
