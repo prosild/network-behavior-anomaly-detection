@@ -23,6 +23,7 @@ PCAP → Zeek → Silver → Gold → 그래프 순서로 만든다.
 | [build_synthetic_zeek.py](build_synthetic_zeek.py) | 합성 패턴을 화\~금 Zeek 로그 사본에 주입(DD-008) |
 | [build_eda_part1.py](build_eda_part1.py), [build_eda_part2.py](build_eda_part2.py) | EDA 그림과 통계([docs/eda-design-evidence.md](../docs/eda-design-evidence.md)) |
 | [draw_architecture.py](draw_architecture.py) | README 구조도(`docs/figures/architecture.png`) |
+| [draw_readme_figures.py](draw_readme_figures.py) | README 결과 그림(`docs/figures/eval-recall.png`, `docs/figures/lab-attacks.png`) |
 
 ## 2. 학습·평가 (단계 3)
 
